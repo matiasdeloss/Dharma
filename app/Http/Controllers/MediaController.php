@@ -8,11 +8,18 @@ use App\Models\User;
 use App\Models\Watchlist;
 use App\Services\TmdbService;
 use App\Services\OmdbService;
+use App\Traits\HasUserStats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MediaController extends Controller
 {
+    use HasUserStats;
+
+    // Imagen fija para el fondo del hero del home (no rota al azar, a diferencia
+    // del backdrop de /login y /register).
+    protected const HERO_BACKDROP_FILE = 'MV5BMzdkNTdhMzItYjVhOC00M2RmLThmOTAtNmZlNDJkOTc2ODk2XkEyXkFqcGc@._V1_FMjpg_UX1280_.jpg';
+
     protected TmdbService $tmdb;
     protected OmdbService $omdb;
 
@@ -39,23 +46,7 @@ class MediaController extends Controller
 
         $userId = Auth::id() ?? User::first()?->id;
 
-        if (Auth::check()) {
-            $stats = [
-                'total_reviews' => Review::where('user_id', Auth::id())->where(function($q) {
-                    $q->whereNotNull('review_text')->where('review_text', '!=', '');
-                })->count() ?: Review::where('user_id', Auth::id())->count(),
-                'total_notes' => Review::where('user_id', Auth::id())->whereNotNull('private_notes')->where('private_notes', '!=', '')->count(),
-                'total_watchlist' => Watchlist::where('user_id', Auth::id())->count(),
-            ];
-        } else {
-            $stats = [
-                'total_reviews' => Review::where(function($q) {
-                    $q->whereNotNull('review_text')->where('review_text', '!=', '');
-                })->count() ?: Review::count(),
-                'total_notes' => Review::whereNotNull('private_notes')->where('private_notes', '!=', '')->count(),
-                'total_watchlist' => Watchlist::count(),
-            ];
-        }
+        $stats = $this->getHeroStats(Auth::id());
 
         $user = Auth::user();
 
@@ -81,6 +72,10 @@ class MediaController extends Controller
             'stats' => $stats,
             'user' => $user,
             'isConfigured' => $this->tmdb->isConfigured(),
+            'heroBackdrop' => [
+                'url' => asset('images/auth/' . self::HERO_BACKDROP_FILE),
+                'title' => '',
+            ],
         ]);
     }
 

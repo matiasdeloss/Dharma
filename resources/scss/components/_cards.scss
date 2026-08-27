@@ -9,6 +9,7 @@
     border-radius: 10px;
     overflow: hidden;
     isolation: isolate;
+    margin: 0 0.3rem;
     transform: translateZ(0);
     will-change: transform, box-shadow;
     transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -20,10 +21,6 @@
     &:hover {
         transform: translateY(-6px) scale(1.02);
         z-index: 10;
-        // Alcance reducido a propósito: en el carrusel horizontal, la card de un
-        // extremo siempre puede caer justo en el borde del scroll (overflow-x la
-        // recorta ahí). Una sombra más angosta minimiza ese corte sin eliminar
-        // la profundidad del hover.
         box-shadow: 0 10px 18px rgba(0, 0, 0, 0.4);
     }
 }
@@ -58,9 +55,21 @@
     border: none;
 }
 
+.movie-card-rating {
+    font-size: 1.05rem;
+
+    i {
+        font-size: 1.05rem;
+    }
+}
+
+.movie-card-title {
+    font-size: 0.95rem;
+}
+
 .ribbon-btn {
-    width: 36px;
-    height: 43px;
+    width: 40px;
+    height: 45px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -84,6 +93,7 @@
     }
 
     i {
+        font-size: 1.4rem;
         transition: transform $transition-fast;
     }
 
@@ -95,26 +105,22 @@
         }
     }
 
-    &:active {
-        transform: scale(0.92);
-    }
 }
 
 .badge-rate-btn {
     background-color: rgba(255, 255, 255, 0.08);
     color: var(--dharma-text-main);
-    border: none !important;
+    border: 1px solid transparent !important;
     font-size: 0.75rem;
     font-weight: 600;
     padding: 0.22rem 0.6rem;
     border-radius: $radius-pill;
-    transition: background-color $transition-fast, color $transition-fast;
+    transition: border-color $transition-fast;
     text-decoration: none;
     cursor: pointer;
 
     &:hover {
-        background-color: rgba(212, 175, 55, 0.2);
-        color: var(--dharma-accent);
+        border-color: rgba(34, 197, 94, 0.6) !important;
     }
 }
 
@@ -126,7 +132,13 @@
     100% { transform: scale(1); }
 }
 
-.ribbon-btn.btn-pulse,
+// El ribbon pulsa solo el ícono (no el fondo/caja del botón, que queda fijo
+// contra la esquina del póster); el badge de Calificar pulsa entero porque ahí
+// se lee como una sola píldora (ícono + texto).
+.ribbon-btn.btn-pulse i {
+    animation: btn-pulse-feedback 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .badge-rate-btn.btn-pulse {
     animation: btn-pulse-feedback 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

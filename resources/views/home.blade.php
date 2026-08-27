@@ -2,15 +2,6 @@
 
 @section('title', 'Guarda tus reseñas y notas de películas')
 
-@php
-    $heroBackdropPath = $popularPicks[0]['backdrop_path']
-        ?? $topMovies[0]['backdrop_path']
-        ?? null;
-    $heroBackdrop = $heroBackdropPath
-        ? config('services.tmdb.image_base_url', 'https://image.tmdb.org/t/p') . '/original' . $heroBackdropPath
-        : null;
-@endphp
-
 @section('content')
 <div class="container">
     @if(!$isConfigured)
@@ -33,17 +24,24 @@
     @endif
 
     <!-- Hero Banner -->
-    <div class="hero-home-banner mb-5" @if($heroBackdrop) style="--hero-backdrop: url('{{ $heroBackdrop }}');" @endif>
+    <div class="hero-home-banner mb-5" @if(!empty($heroBackdrop['url'])) style="--hero-backdrop: url('{{ $heroBackdrop['url'] }}');" @endif>
+        @if(!empty($heroBackdrop['title']))
+            <div class="hero-backdrop-credit">
+                <i class="bi bi-camera-reels text-accent"></i>
+                <span>{{ $heroBackdrop['title'] }}</span>
+            </div>
+        @endif
+
         <div class="row align-items-center position-relative z-2">
             <div class="{{ Auth::check() ? 'col-lg-7' : 'col-lg-10 col-xl-9' }}">
-                <h1 class="display-5 fw-extrabold text-white mb-2">
+                <h1 class="hero-title display-5 fw-extrabold text-white mb-2">
                     Lleva el registro de cada película y serie que ves.
                 </h1>
-                <p class="lead text-secondary mb-3">
+                <p class="hero-subtitle lead text-secondary mb-3">
                     Califica del 1 al 10, escribe tus reseñas públicas y guarda notas privadas de tus momentos y citas favoritas de cada película.
                 </p>
-                <div class="text-secondary-emphasis small fst-italic mb-4">
-                    <i class="bi bi-quote me-1"></i>Live Together. Watch Together.
+                <div class="hero-tagline mb-4">
+                    <i class="bi bi-quote"></i>Live Together. Watch Together.
                 </div>
                 <div class="d-flex flex-wrap gap-3">
                     @auth
@@ -65,26 +63,24 @@
             </div>
 
             @auth
-            <div class="col-lg-5 d-none d-lg-flex flex-column align-items-center justify-content-center text-center ps-lg-4">
-                <div class="text-xs text-secondary text-uppercase fw-bold mb-3 tracking-wider opacity-75">
-                    <i class="bi bi-activity text-accent me-1"></i> Tu Actividad
-                </div>
-
-                <!-- 3 Stats Counters Seamlessly Integrated -->
-                <div class="d-flex justify-content-center align-items-center gap-4 gap-xl-5 text-center">
-                    <div>
-                        <div class="display-5 fw-extrabold text-sage mb-0">{{ $stats['total_notes'] ?? 0 }}</div>
-                        <div class="small fw-semibold text-secondary">Notas</div>
+            <div class="col-lg-5 d-none d-lg-flex align-items-center justify-content-center ps-lg-4">
+                <div class="hero-stats-row">
+                    <div class="hero-stat">
+                        <i class="hero-stat-icon bi bi-journal-text text-cream"></i>
+                        <div id="hero-stat-notes" class="hero-stat-number text-cream">{{ $stats['total_notes'] ?? 0 }}</div>
+                        <div class="hero-stat-label">Notas</div>
                     </div>
-                    <div class="vr bg-secondary opacity-25 vr-stat-divider"></div>
-                    <div>
-                        <div class="display-5 fw-extrabold text-purple mb-0">{{ $stats['total_reviews'] ?? 0 }}</div>
-                        <div class="small fw-semibold text-secondary">Reseñas</div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <i class="hero-stat-icon bi bi-chat-square-quote text-purple"></i>
+                        <div id="hero-stat-reviews" class="hero-stat-number text-purple">{{ $stats['total_reviews'] ?? 0 }}</div>
+                        <div class="hero-stat-label">Reseñas</div>
                     </div>
-                    <div class="vr bg-secondary opacity-25 vr-stat-divider"></div>
-                    <div>
-                        <div class="display-5 fw-extrabold text-info mb-0">{{ $stats['total_watchlist'] ?? 0 }}</div>
-                        <div class="small fw-semibold text-secondary">Watchlist</div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <i class="hero-stat-icon bi bi-bookmark-heart text-info"></i>
+                        <div id="hero-stat-watchlist" class="hero-stat-number text-info">{{ $stats['total_watchlist'] ?? 0 }}</div>
+                        <div class="hero-stat-label">Watchlist</div>
                     </div>
                 </div>
             </div>
@@ -95,10 +91,8 @@
     <!-- 1. Selecciones Populares -->
     <div class="media-slider-container mb-5">
         <div class="media-slider-header">
-            <h3 class="fw-bold text-white mb-0">
-                <i class="bi bi-stars text-warning me-2"></i>Selecciones Populares
-            </h3>
-            <span class="text-secondary small">Los títulos en tendencia más destacados de la semana</span>
+            <h3 class="section-title">Selecciones Populares</h3>
+            <span class="section-subtitle">Los títulos en tendencia más destacados de la semana</span>
         </div>
         <div class="media-slider-wrapper position-relative">
             <button type="button" class="slider-nav-arrow slider-nav-prev" aria-label="Anterior" title="Anterior">
@@ -122,10 +116,8 @@
     <!-- 2. Mejores 10 Películas de la Semana (Popularidad) -->
     <div class="media-slider-container mb-5">
         <div class="media-slider-header">
-            <h3 class="fw-bold text-white mb-0">
-                <i class="bi bi-film text-accent me-2"></i>Top 10 Películas de la Semana
-            </h3>
-            <span class="text-secondary small">Las 10 películas más populares en la comunidad esta semana</span>
+            <h3 class="section-title">Top 10 Películas de la Semana</h3>
+            <span class="section-subtitle">Las 10 películas más populares en la comunidad esta semana</span>
         </div>
         <div class="media-slider-wrapper position-relative">
             <button type="button" class="slider-nav-arrow slider-nav-prev" aria-label="Anterior" title="Anterior">
@@ -154,10 +146,8 @@
     <!-- 3. Mejores 10 Series de la Semana (Popularidad) -->
     <div class="media-slider-container mb-5">
         <div class="media-slider-header">
-            <h3 class="fw-bold text-white mb-0">
-                <i class="bi bi-tv text-info me-2"></i>Top 10 Series de la Semana
-            </h3>
-            <span class="text-secondary small">Las 10 series con mayor audiencia del momento</span>
+            <h3 class="section-title">Top 10 Series de la Semana</h3>
+            <span class="section-subtitle">Las 10 series con mayor audiencia del momento</span>
         </div>
         <div class="media-slider-wrapper position-relative">
             <button type="button" class="slider-nav-arrow slider-nav-prev" aria-label="Anterior" title="Anterior">
@@ -187,11 +177,9 @@
     @if($recentReviews->count() > 0)
         <div class="mb-5">
             <div class="d-flex justify-content-between align-items-end mb-4">
-                <div>
-                    <h3 class="fw-bold text-white mb-0">
-                        <i class="bi bi-chat-square-quote text-success me-2"></i>Últimas Reseñas y Notas
-                    </h3>
-                    <span class="text-secondary small">Lo que se ha estado viendo y comentando recientemente</span>
+                <div class="section-header mb-0">
+                    <h3 class="section-title">Últimas Reseñas y Notas</h3>
+                    <span class="section-subtitle">Lo que se ha estado viendo y comentando recientemente</span>
                 </div>
                 <a href="{{ route('reviews.index') }}" class="btn btn-sm btn-outline-secondary">Ver todo el diario <i class="bi bi-arrow-right ms-1"></i></a>
             </div>

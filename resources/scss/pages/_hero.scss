@@ -41,6 +41,95 @@
     }
 }
 
-.vr-stat-divider {
-    height: 48px;
+// Crédito discreto de la foto de fondo (mismo patrón que /login)
+.hero-backdrop-credit {
+    position: absolute;
+    bottom: 1rem;
+    right: 1.25rem;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    background-color: rgba(22, 28, 35, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.3rem 0.75rem;
+    border-radius: $radius-pill;
+    pointer-events: none;
+}
+
+// Título y subtítulo necesitan algo de sombra propia: al estar sobre un
+// fotograma real (no un fondo plano), zonas más claras de la imagen pueden
+// comerse el contraste del texto blanco.
+.hero-title {
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
+}
+
+.hero-subtitle {
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+}
+
+// Tagline como una pequeña "firma" de marca en vez de texto itálico suelto.
+.hero-tagline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--dharma-accent);
+    color: var(--dharma-cream);
+    font-style: italic;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    opacity: 0.9;
+
+    .bi-quote {
+        color: var(--dharma-accent);
+        font-size: 1rem;
+    }
+}
+
+// --------------------------------------------------------------------------
+// Estadísticas del usuario (Notas / Reseñas / Watchlist)
+// --------------------------------------------------------------------------
+.hero-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.hero-stat-icon {
+    font-size: 1.05rem;
+    opacity: 0.8;
+    margin-bottom: 0.15rem;
+}
+
+.hero-stat-number {
+    font-family: $font-family-headings;
+    font-size: 2.9rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.hero-stat-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--dharma-text-main);
+}
+
+.hero-stat-divider {
+    align-self: stretch;
+    width: 1px;
+    background-color: var(--dharma-surface-hover);
 }

@@ -100,4 +100,36 @@ export function initHtmxConfig() {
         void btn.offsetWidth; // reinicia la animación si se hace doble clic rápido
         btn.classList.add('btn-pulse');
     });
+
+    // Slider de calificación del modal. Delegado en document porque htmx inyecta
+    // el modal después de cargar la página.
+    function syncRateSlider(slider, { touched = false } = {}) {
+        const wrapper = slider.closest('.rate-hero-card') || slider.closest('.rate-hero-content') || slider.closest('.rate-hero-inner') || slider.closest('form');
+        if (!wrapper) return;
+
+        const value = parseFloat(slider.value);
+
+        // Progreso para pintar el tramo recorrido de la barra (ver _modals.scss).
+        // Se actualiza siempre, se haya tocado el slider o no.
+        const pct = ((value - slider.min) / (slider.max - slider.min)) * 100;
+        slider.style.setProperty('--rate-progress', `${pct}%`);
+
+        // El número grande solo se muestra si ya había una nota guardada, o si
+        // el usuario recién movió el slider — así no parece pre-calificada.
+        if (touched) slider.dataset.hasRating = 'true';
+        if (slider.dataset.hasRating !== 'true') return;
+
+        const valueEl = wrapper.querySelector('#rateValue');
+        if (valueEl) valueEl.textContent = value.toFixed(1);
+    }
+
+    document.addEventListener('input', (e) => {
+        if (e.target.id === 'rateSlider') syncRateSlider(e.target, { touched: true });
+    });
+
+    // Estado inicial al abrir el modal (htmx ya insertó el contenido).
+    document.body.addEventListener('htmx:afterSwap', (e) => {
+        const slider = e.target.querySelector?.('#rateSlider');
+        if (slider) syncRateSlider(slider);
+    });
 }

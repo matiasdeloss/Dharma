@@ -43,7 +43,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('reviews.index') ? 'active text-accent fw-semibold' : 'text-light-emphasis' }}" href="{{ route('reviews.index') }}">
-                            <i class="bi bi-journal-bookmark me-1"></i> Mi Diario & Notas
+                            <i class="bi bi-journal-bookmark me-1"></i> Mis Notas
                         </a>
                     </li>
                     <li class="nav-item">
@@ -103,7 +103,7 @@
                                 </li>
                                 <li>
                                     <a class="dropdown-item py-2" href="{{ route('reviews.index') }}">
-                                        <i class="bi bi-journal-text me-2 text-success"></i> Mi Diario & Notas
+                                        <i class="bi bi-journal-text me-2 text-success"></i> Mis Notas
                                     </a>
                                 </li>
                                 <li>
@@ -193,7 +193,7 @@
 
     <!-- Modal Container for HTMX Quick Log / Notes -->
     <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered rate-modal-dialog">
             <div class="modal-content modal-content-dharma" id="logModalContent">
                 <!-- HTMX will load the form here -->
                 <div class="p-5 text-center">

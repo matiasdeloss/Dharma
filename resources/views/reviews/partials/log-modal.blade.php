@@ -3,135 +3,130 @@
     $originalTitle = $media['original_title'] ?? $media['original_name'] ?? null;
     $date = $media['release_date'] ?? $media['first_air_date'] ?? null;
     $year = $date ? substr($date, 0, 4) : null;
-    $poster = !empty($media['poster_path'])
-        ? config('services.tmdb.image_base_url', 'https://image.tmdb.org/t/p') . '/w300' . $media['poster_path']
-        : asset('images/no-poster.svg');
-    $currentRating = $review ? (float)$review->rating : null;
+    $imageBase = config('services.tmdb.image_base_url', 'https://image.tmdb.org/t/p');
+    $stillPath = $media['poster_path'] ?? $media['backdrop_path'] ?? null;
+    $still = $stillPath ? $imageBase . '/w500' . $stillPath : asset('images/no-poster.svg');
+    $currentRating = $review && $review->rating !== null ? (float) $review->rating : null;
 @endphp
 
-<div class="modal-header border-secondary">
-    <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-journal-plus text-success fs-5"></i>
-        <h5 class="modal-title fw-bold" id="logModalLabel">
-            {{ $review ? 'Editar Reseña & Notas' : 'Registrar en tu Diario' }}
-        </h5>
-    </div>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
+{{-- Botón propio en vez de .btn-close: el filtro invert() de btn-close-white
+     también invierte el fondo del botón y lo vuelve un círculo gris claro. --}}
+<button type="button" class="rate-modal-close" data-bs-dismiss="modal" aria-label="Cerrar">
+    <i class="bi bi-x-lg"></i>
+</button>
 
-<form hx-post="{{ route('reviews.store') }}" hx-target="#log-action-container" hx-swap="outerHTML">
-    @csrf
-    <input type="hidden" name="tmdb_id" value="{{ $media['id'] }}">
-    <input type="hidden" name="media_type" value="{{ $type }}">
-    <input type="hidden" name="title" value="{{ $title }}">
-    <input type="hidden" name="original_title" value="{{ $originalTitle }}">
-    <input type="hidden" name="release_date" value="{{ $date }}">
-    <input type="hidden" name="poster_path" value="{{ $media['poster_path'] ?? '' }}">
-    <input type="hidden" name="backdrop_path" value="{{ $media['backdrop_path'] ?? '' }}">
-    <input type="hidden" name="overview" value="{{ $media['overview'] ?? '' }}">
-    <input type="hidden" name="runtime" value="{{ $media['runtime'] ?? ($media['episode_run_time'][0] ?? null) }}">
-    <input type="hidden" name="vote_average" value="{{ $media['vote_average'] ?? null }}">
-
-    <div class="modal-body">
-        <div class="row g-4">
-            <!-- Left Column: Poster & Quick Info -->
-            <div class="col-md-4 text-center">
-                <img src="{{ $poster }}" alt="{{ $title }}" class="modal-poster-preview img-fluid mb-3">
-                <h6 class="fw-bold text-white mb-1">{{ $title }}</h6>
+<div class="rate-split-wrapper">
+    <!-- Izquierda: Formulario -->
+    <div class="rate-split-form-col">
+        <!-- Header: Título con tipo (serie o película) y año -->
+        <div class="rate-modal-heading">
+            <h4 class="rate-modal-title mb-1" id="logModalLabel">{{ $title }}</h4>
+            <div class="rate-modal-meta d-flex justify-content-center align-items-center gap-2">
+                <span class="rate-modal-badge">{{ $type === 'tv' ? 'Serie de TV' : 'Película' }}</span>
                 @if($year)
-                    <span class="text-secondary small">{{ $year }} &bull; {{ $type === 'tv' ? 'Serie de TV' : 'Película' }}</span>
+                    <span class="rate-modal-year">&bull; {{ $year }}</span>
                 @endif
             </div>
+        </div>
 
-            <!-- Right Column: Rating, Notes & Review -->
-            <div class="col-md-8">
-                <!-- Status & Date -->
-                <div class="row g-3 mb-3">
-                    <div class="col-sm-6">
-                        <label class="form-label small fw-semibold text-secondary">Estado</label>
-                        <select name="status" class="form-select form-select-sm bg-dark text-white border-secondary">
-                            <option value="watched" {{ ($review && $review->status === 'watched') || !$review ? 'selected' : '' }}>✓ Vista</option>
-                            <option value="watching" {{ $review && $review->status === 'watching' ? 'selected' : '' }}>En progreso (Viendo)</option>
-                            <option value="plan_to_watch" {{ $review && $review->status === 'plan_to_watch' ? 'selected' : '' }}>Por ver</option>
-                            <option value="dropped" {{ $review && $review->status === 'dropped' ? 'selected' : '' }}>Abandonada</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="form-label small fw-semibold text-secondary">Fecha en que la viste</label>
-                        <input type="date" name="watched_date" class="form-control form-control-sm bg-dark text-white border-secondary" value="{{ $review && $review->watched_date ? $review->watched_date->format('Y-m-d') : date('Y-m-d') }}">
-                    </div>
+        <form hx-post="{{ route('reviews.store') }}" hx-target="#log-action-container" hx-swap="outerHTML">
+            @csrf
+            <input type="hidden" name="tmdb_id" value="{{ $media['id'] }}">
+            <input type="hidden" name="media_type" value="{{ $type }}">
+            <input type="hidden" name="title" value="{{ $title }}">
+            <input type="hidden" name="original_title" value="{{ $originalTitle }}">
+            <input type="hidden" name="release_date" value="{{ $date }}">
+            <input type="hidden" name="poster_path" value="{{ $media['poster_path'] ?? '' }}">
+            <input type="hidden" name="backdrop_path" value="{{ $media['backdrop_path'] ?? '' }}">
+            <input type="hidden" name="overview" value="{{ $media['overview'] ?? '' }}">
+            <input type="hidden" name="runtime" value="{{ $media['runtime'] ?? ($media['episode_run_time'][0] ?? null) }}">
+            <input type="hidden" name="vote_average" value="{{ $media['vote_average'] ?? null }}">
+
+            {{-- Si la calificamos es porque la vimos: sin estado ni re-visionado --}}
+            <input type="hidden" name="status" value="watched">
+            <input type="hidden" name="is_rewatch" value="0">
+            <input type="hidden" name="watched_date" value="{{ $review && $review->watched_date ? $review->watched_date->format('Y-m-d') : date('Y-m-d') }}">
+
+            <!-- 1. Estrella + Número grande + Línea desplazable -->
+            <div class="text-center rate-score-block">
+                <div class="d-flex align-items-center justify-content-center gap-3 mb-2">
+                    <i class="bi bi-star-fill rate-huge-star"></i>
+                    <span class="rate-huge-number" id="rateValue">{{ $currentRating !== null ? number_format($currentRating, 1) : '—' }}</span>
                 </div>
 
-                <!-- 1 to 10 Rating (with Star conversion) -->
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="form-label small fw-semibold text-secondary mb-0">
-                            Calificación (1 al 10 / 5 Estrellas)
-                        </label>
-                        <div class="form-check form-check-inline mb-0">
-                            <input class="form-check-input" type="checkbox" id="is_rewatch" name="is_rewatch" value="1" {{ $review && $review->is_rewatch ? 'checked' : '' }}>
-                            <label class="form-check-label small text-secondary" for="is_rewatch">
-                                <i class="bi bi-arrow-repeat me-1"></i> Re-visionado
-                            </label>
-                        </div>
+                <!-- Línea desplazable del 1 al 10. Sin nota previa, arranca en el
+                     medio (5.5) pero el número de arriba no se muestra hasta que
+                     se toca — así no parece que ya tiene una calificación puesta. -->
+                <div class="rate-slider-wrapper">
+                    <input
+                        type="range"
+                        name="rating"
+                        id="rateSlider"
+                        class="rate-slider"
+                        min="1"
+                        max="10"
+                        step="0.5"
+                        value="{{ $currentRating ?? 5.5 }}"
+                        data-has-rating="{{ $currentRating !== null ? 'true' : 'false' }}"
+                        aria-label="Calificación del 1 al 10"
+                    >
+                    <div class="rate-scale">
+                        <span>1</span>
+                        <span>5</span>
+                        <span>10</span>
                     </div>
-                    <select name="rating" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Sin calificar</option>
-                        <optgroup label="🌟 Obras Maestras & Sobresalientes">
-                            <option value="10.0" {{ $currentRating === 10.0 ? 'selected' : '' }}>10 / 10 ★★★★★ — (Obra Maestra)</option>
-                            <option value="9.5" {{ $currentRating === 9.5 ? 'selected' : '' }}>9.5 / 10 ★★★★★ — (Casi Perfecta)</option>
-                            <option value="9.0" {{ $currentRating === 9.0 ? 'selected' : '' }}>9.0 / 10 ★★★★½ — (Excelente)</option>
-                        </optgroup>
-                        <optgroup label="👍 Muy Buenas & Buenas">
-                            <option value="8.5" {{ $currentRating === 8.5 ? 'selected' : '' }}>8.5 / 10 ★★★★½ — (Muy Buena+)</option>
-                            <option value="8.0" {{ $currentRating === 8.0 ? 'selected' : '' }}>8.0 / 10 ★★★★☆ — (Muy Buena)</option>
-                            <option value="7.5" {{ $currentRating === 7.5 ? 'selected' : '' }}>7.5 / 10 ★★★½☆ — (Notable)</option>
-                            <option value="7.0" {{ $currentRating === 7.0 ? 'selected' : '' }}>7.0 / 10 ★★★½☆ — (Buena)</option>
-                        </optgroup>
-                        <optgroup label="👌 Interesantes & Regulares">
-                            <option value="6.5" {{ $currentRating === 6.5 ? 'selected' : '' }}>6.5 / 10 ★★★☆☆ — (Interesante)</option>
-                            <option value="6.0" {{ $currentRating === 6.0 ? 'selected' : '' }}>6.0 / 10 ★★★☆☆ — (Decente / Pasable)</option>
-                            <option value="5.5" {{ $currentRating === 5.5 ? 'selected' : '' }}>5.5 / 10 ★★½☆☆ — (Justita)</option>
-                            <option value="5.0" {{ $currentRating === 5.0 ? 'selected' : '' }}>5.0 / 10 ★★½☆☆ — (Regular)</option>
-                        </optgroup>
-                        <optgroup label="👎 Flojas & Malas">
-                            <option value="4.0" {{ $currentRating === 4.0 ? 'selected' : '' }}>4.0 / 10 ★★☆☆☆ — (Floja)</option>
-                            <option value="3.0" {{ $currentRating === 3.0 ? 'selected' : '' }}>3.0 / 10 ★½☆☆☆ — (Mala)</option>
-                            <option value="2.0" {{ $currentRating === 2.0 ? 'selected' : '' }}>2.0 / 10 ★☆☆☆☆ — (Muy Mala)</option>
-                            <option value="1.0" {{ $currentRating === 1.0 ? 'selected' : '' }}>1.0 / 10 ½☆☆☆☆ — (Pésima)</option>
-                        </optgroup>
-                    </select>
-                </div>
-
-                <!-- Public Review Text -->
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold text-secondary">
-                        <i class="bi bi-chat-left-text me-1"></i> Reseña Pública
-                    </label>
-                    <textarea name="review_text" rows="3" class="form-control bg-dark text-white border-secondary" placeholder="¿Qué te pareció la dirección, actuaciones, guión o fotografía?">{{ $review ? $review->review_text : '' }}</textarea>
-                    <div class="form-check mt-1">
-                        <input class="form-check-input" type="checkbox" id="contains_spoilers" name="contains_spoilers" value="1" {{ $review && $review->contains_spoilers ? 'checked' : '' }}>
-                        <label class="form-check-label small text-secondary" for="contains_spoilers">
-                            Contiene spoilers
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Private Notes -->
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold text-warning">
-                        <i class="bi bi-lock-fill me-1"></i> Notas Privadas (Solo visibles para ti)
-                    </label>
-                    <textarea name="private_notes" rows="2" class="form-control bg-dark text-white border-secondary" placeholder="Anota con quién la viste, recuerdos personales, citas favoritas o detalles para recordar...">{{ $review ? $review->private_notes : '' }}</textarea>
                 </div>
             </div>
-        </div>
+
+            <!-- 2. Reseña Pública -->
+            <div class="mb-3 text-center">
+                <label class="modal-form-label text-accent" for="review_text">
+                    <i class="bi bi-chat-left-text me-1"></i> Reseña Pública
+                </label>
+                <textarea
+                    name="review_text"
+                    id="review_text"
+                    class="form-control modal-form-control modal-textarea"
+                    placeholder="¿Qué te pareció la película? Escribe tu opinión..."
+                >{{ $review ? $review->review_text : '' }}</textarea>
+
+                <!-- Interruptor tipo Switch estilizado para Spoilers -->
+                <div class="form-check form-switch d-inline-flex align-items-center gap-2 mt-2 spoiler-switch-wrapper">
+                    <input class="form-check-input spoiler-switch-input" type="checkbox" role="switch" id="contains_spoilers" name="contains_spoilers" value="1" {{ $review && $review->contains_spoilers ? 'checked' : '' }}>
+                    <label class="form-check-label spoiler-switch-label" for="contains_spoilers">
+                        Contiene spoilers
+                    </label>
+                </div>
+            </div>
+
+            <!-- 3. Comentario Privado -->
+            <div class="mb-3 text-center">
+                <label class="modal-form-label text-accent" for="private_notes">
+                    <i class="bi bi-lock-fill me-1"></i> Comentario Privado
+                </label>
+                <textarea
+                    name="private_notes"
+                    id="private_notes"
+                    class="form-control modal-form-control modal-textarea"
+                    placeholder="Tus notas personales, recuerdos o detalles que solo tú puedes ver..."
+                >{{ $review ? $review->private_notes : '' }}</textarea>
+            </div>
+
+            <!-- 4. Botones Cancelar y Calificar centrados -->
+            <div class="d-flex justify-content-center gap-3 pt-1">
+                <button type="button" class="btn btn-cine-secondary px-4 py-2" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-cine-primary px-4 py-2 fw-bold">
+                    Calificar
+                </button>
+            </div>
+        </form>
     </div>
 
-    <div class="modal-footer border-secondary">
-        <button type="button" class="btn btn-cine-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-cine-primary">
-            <i class="bi bi-check-lg me-1"></i> {{ $review ? 'Actualizar Registro' : 'Guardar en mi Diario' }}
-        </button>
+    <!-- Derecha: Fotograma de la película (mismo patrón que /login) -->
+    <div class="rate-split-media-col">
+        <div class="split-cinema-still" style="background-image: url('{{ $still }}');" aria-hidden="true"></div>
+        <div class="split-seam-gradient" aria-hidden="true"></div>
     </div>
-</form>
+</div>

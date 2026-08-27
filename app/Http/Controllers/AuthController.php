@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\TmdbService;
+use App\Traits\HasLocalBackdrop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,44 +12,13 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    use HasLocalBackdrop;
+
     protected TmdbService $tmdb;
 
     public function __construct(TmdbService $tmdb)
     {
         $this->tmdb = $tmdb;
-    }
-
-    /**
-     * Get a local curated backdrop from public/images/auth/ (0 API calls, 0ms latency)
-     */
-    protected function getLocalBackdrop(): array
-    {
-        $dir = public_path('images/auth');
-        $localFiles = \Illuminate\Support\Facades\File::exists($dir)
-            ? collect(\Illuminate\Support\Facades\File::files($dir))
-                ->filter(fn($file) => in_array(strtolower($file->getExtension()), ['jpg', 'jpeg', 'png', 'webp']))
-                ->values()
-            : collect();
-
-        if ($localFiles->isNotEmpty()) {
-            $chosen = $localFiles->random();
-            $filename = $chosen->getFilename();
-            $nameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-            $cleanTitle = '';
-            if (!str_starts_with($filename, 'MV5') && !str_contains($filename, '@') && strlen($nameWithoutExt) < 40) {
-                $cleanTitle = ucwords(str_replace(['-', '_'], ' ', $nameWithoutExt));
-            }
-
-            return [
-                'url' => asset('images/auth/' . $filename),
-                'title' => $cleanTitle,
-            ];
-        }
-
-        return [
-            'url' => 'https://image.tmdb.org/t/p/w1280/sAtoMqDVhNDQBc3QJL3RF6hlxGq.jpg',
-            'title' => '',
-        ];
     }
 
     /**

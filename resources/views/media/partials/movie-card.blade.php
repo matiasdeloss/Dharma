@@ -44,7 +44,7 @@
             <div>
                 <!-- Rating Row (TMDB Score + Clear "Calificar" Badge Button) -->
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="small fw-bold text-white d-flex align-items-center gap-1">
+                    <div class="movie-card-rating fw-bold text-white d-flex align-items-center gap-1">
                         <i class="bi bi-star-fill text-warning"></i>
                         <span>{{ $rating ? number_format($rating, 1) : '-' }}</span>
                     </div>
@@ -58,13 +58,13 @@
                         data-bs-toggle="modal"
                         data-bs-target="#logModal"
                     >
-                        <i class="bi bi-star text-warning"></i>
+                        <i class="bi bi-star text-success"></i>
                         <span>Calificar</span>
                     </button>
                 </div>
 
                 <!-- Title & Year -->
-                <a href="{{ route('media.show', ['type' => $type, 'id' => $id]) }}" class="text-white text-decoration-none fw-semibold small d-block text-truncate-2 mb-1" title="{{ $title }}">
+                <a href="{{ route('media.show', ['type' => $type, 'id' => $id]) }}" class="movie-card-title text-white text-decoration-none fw-semibold d-block text-truncate-2 mb-1" title="{{ $title }}">
                     {{ $title }}
                 </a>
                 @if($year)

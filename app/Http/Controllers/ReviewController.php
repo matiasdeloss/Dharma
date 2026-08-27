@@ -7,11 +7,14 @@ use App\Models\Review;
 use App\Models\User;
 use App\Models\Watchlist;
 use App\Services\TmdbService;
+use App\Traits\HasUserStats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
+    use HasUserStats;
+
     protected TmdbService $tmdb;
 
     public function __construct(TmdbService $tmdb)
@@ -192,11 +195,19 @@ class ReviewController extends Controller
         }
 
         if ($request->header('HX-Request')) {
-            return response(view('reviews.partials.log-button-state', [
+            $html = view('reviews.partials.log-button-state', [
                 'review' => $review,
                 'type' => $validated['media_type'],
                 'tmdbId' => $validated['tmdb_id'],
-            ]))->withHeaders([
+            ])->render();
+
+            // Fragmento out-of-band: si el hero del home está en pantalla, sus
+            // contadores de Notas/Reseñas se actualizan solos con esta respuesta.
+            $html .= view('partials.hero-stats-oob', [
+                'stats' => $this->getHeroStats($userId),
+            ])->render();
+
+            return response($html)->withHeaders([
                 'HX-Trigger' => json_encode([
                     'reviewSaved' => [
                         'title' => 'Mi Diario',

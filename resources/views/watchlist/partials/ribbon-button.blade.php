@@ -10,11 +10,11 @@
 
     @if($inWatchlist)
         <button type="submit" class="ribbon-btn shadow p-0" title="En tu Watchlist (Clic para quitar)">
-            <i class="bi bi-bookmark-check-fill fs-5 ribbon-icon-active"></i>
+            <i class="bi bi-bookmark-check-fill ribbon-icon-active"></i>
         </button>
     @else
         <button type="submit" class="ribbon-btn shadow p-0" title="Guardar en Watchlist">
-            <i class="bi bi-bookmark-plus fs-5 ribbon-icon-inactive"></i>
+            <i class="bi bi-bookmark-plus ribbon-icon-inactive"></i>
         </button>
     @endif
 </form>

@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\MediaItem;
 use App\Models\User;
 use App\Models\Watchlist;
+use App\Traits\HasUserStats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class WatchlistController extends Controller
 {
+    use HasUserStats;
+
     /**
      * Display user's watchlist
      */
@@ -108,7 +111,7 @@ class WatchlistController extends Controller
                 ? 'watchlist.partials.ribbon-button'
                 : 'watchlist.partials.toggle-button';
 
-            return response(view($viewName, [
+            $html = view($viewName, [
                 'inWatchlist' => $inWatchlist,
                 'tmdbId' => $validated['tmdb_id'],
                 'mediaType' => $validated['media_type'],
@@ -116,7 +119,15 @@ class WatchlistController extends Controller
                 'posterPath' => $validated['poster_path'] ?? '',
                 'releaseDate' => $validated['release_date'] ?? '',
                 'voteAverage' => $validated['vote_average'] ?? '',
-            ]))->withHeaders([
+            ])->render();
+
+            // Fragmento out-of-band: si el hero del home está en pantalla, su
+            // contador de Watchlist se actualiza solo con esta misma respuesta.
+            $html .= view('partials.hero-stats-oob', [
+                'stats' => $this->getHeroStats($userId),
+            ])->render();
+
+            return response($html)->withHeaders([
                 'HX-Trigger' => json_encode([
                     'watchlistUpdated' => [
                         'message' => $message,
