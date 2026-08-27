@@ -1,0 +1,39 @@
+// ==========================================================================
+// Ratings, Badges & Score Tokens
+// ==========================================================================
+
+.badge-genre {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--dharma-text-main);
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: $radius-sm;
+    padding: 0.35em 0.7em;
+    font-size: 0.8rem;
+}
+
+.badge-score {
+    background-color: rgba(0, 224, 84, 0.12);
+    color: var(--dharma-accent);
+    border: 1px solid rgba(0, 224, 84, 0.3);
+    font-weight: 700;
+    border-radius: $radius-sm;
+    padding: 0.35em 0.7em;
+    font-size: 0.85rem;
+}
+
+.star-gold {
+    color: var(--dharma-gold);
+}
+
+.score-display-lg {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--dharma-gold);
+
+    .score-denominator {
+        font-size: 0.85rem;
+        color: var(--dharma-text-secondary);
+        font-weight: normal;
+    }
+}

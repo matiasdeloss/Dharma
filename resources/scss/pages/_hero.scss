@@ -1,0 +1,46 @@
+// ==========================================================================
+// Hero Banners & Movie Backdrop Header Components
+// ==========================================================================
+
+.hero-home-banner {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: $radius-lg;
+    background-color: #14181f;
+    border: 1px solid var(--dharma-border);
+    padding: 2.5rem 2rem;
+
+    // Fotograma de fondo (backdrop de un título en tendencia), atenuado.
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background-image: var(--hero-backdrop, none);
+        background-size: cover;
+        background-position: center 22%;
+        filter: saturate(0.8) brightness(0.6);
+        transform: scale(1.04); // evita bordes claros al filtrar
+    }
+
+    // Viñeta + degradé para que el texto de la izquierda siga siendo legible
+    // sobre cualquier fotograma, tipo "sala de cine" en vez de fondo plano.
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+            linear-gradient(100deg, rgba(15, 18, 22, 0.97) 0%, rgba(15, 18, 22, 0.88) 38%, rgba(15, 18, 22, 0.5) 72%, rgba(15, 18, 22, 0.28) 100%),
+            radial-gradient(ellipse at 50% 130%, rgba(0, 0, 0, 0.55), transparent 60%);
+    }
+
+    @media (min-width: 768px) {
+        padding: 3.5rem 3rem;
+    }
+}
+
+.vr-stat-divider {
+    height: 48px;
+}

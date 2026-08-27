@@ -1,0 +1,149 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Services\TmdbService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+
+class AuthController extends Controller
+{
+    protected TmdbService $tmdb;
+
+    public function __construct(TmdbService $tmdb)
+    {
+        $this->tmdb = $tmdb;
+    }
+
+    /**
+     * Get a local curated backdrop from public/images/auth/ (0 API calls, 0ms latency)
+     */
+    protected function getLocalBackdrop(): array
+    {
+        $dir = public_path('images/auth');
+        $localFiles = \Illuminate\Support\Facades\File::exists($dir)
+            ? collect(\Illuminate\Support\Facades\File::files($dir))
+                ->filter(fn($file) => in_array(strtolower($file->getExtension()), ['jpg', 'jpeg', 'png', 'webp']))
+                ->values()
+            : collect();
+
+        if ($localFiles->isNotEmpty()) {
+            $chosen = $localFiles->random();
+            $filename = $chosen->getFilename();
+            $nameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+            $cleanTitle = '';
+            if (!str_starts_with($filename, 'MV5') && !str_contains($filename, '@') && strlen($nameWithoutExt) < 40) {
+                $cleanTitle = ucwords(str_replace(['-', '_'], ' ', $nameWithoutExt));
+            }
+
+            return [
+                'url' => asset('images/auth/' . $filename),
+                'title' => $cleanTitle,
+            ];
+        }
+
+        return [
+            'url' => 'https://image.tmdb.org/t/p/w1280/sAtoMqDVhNDQBc3QJL3RF6hlxGq.jpg',
+            'title' => '',
+        ];
+    }
+
+    /**
+     * Show the login form
+     */
+    public function showLoginForm()
+    {
+        return view('auth.login', [
+            'backdrop' => $this->getLocalBackdrop(),
+        ]);
+    }
+
+    /**
+     * Handle an incoming authentication request
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ], [
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Por favor ingresa un correo electrónico válido.',
+            'password.required' => 'La contraseña es obligatoria.',
+        ]);
+
+        $remember = $request->boolean('remember');
+
+        if (Auth::attempt($credentials, $remember)) {
+            $request->session()->regenerate();
+
+            return redirect()->intended(route('home'))
+                ->with('success', '¡Bienvenido de nuevo a Dharma!');
+        }
+
+        return back()
+            ->withInput($request->only('email', 'remember'))
+            ->withErrors([
+                'email' => 'Las credenciales proporcionadas no coinciden con nuestros registros.',
+            ]);
+    }
+
+    /**
+     * Show the registration form
+     */
+    public function showRegisterForm()
+    {
+        return view('auth.register', [
+            'backdrop' => $this->getLocalBackdrop(),
+        ]);
+    }
+
+    /**
+     * Handle an incoming registration request
+     */
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ], [
+            'name.required' => 'Tu nombre de cinéfilo es obligatorio.',
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Ingresa un correo electrónico válido.',
+            'email.unique' => 'Este correo electrónico ya está registrado.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route('home')
+            ->with('success', '¡Cuenta creada con éxito! Bienvenido a Dharma.');
+    }
+
+    /**
+     * Destroy an authenticated session
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('home')
+            ->with('info', 'Has cerrado sesión correctamente.');
+    }
+}

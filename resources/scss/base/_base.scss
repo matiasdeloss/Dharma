@@ -1,0 +1,74 @@
+// ==========================================================================
+// Base Styles & CSS Custom Properties
+// ==========================================================================
+
+:root {
+    --dharma-bg: #222831;
+    --dharma-surface: #393e46;
+    --dharma-border: #40474f;
+    --dharma-surface-hover: #484f59;
+    --dharma-elevated: #2d333b;
+    --dharma-text-main: #f8fafc;
+    --dharma-text-secondary: #948979;
+    --dharma-text-muted: #796e5f;
+    --dharma-accent: #d4af37;
+    --dharma-accent-hover: #bfa02f;
+    --dharma-cream: #dfd0b8;
+    --dharma-sage: #697565;
+    --dharma-taupe: #948979;
+    --dharma-gold: #d4af37;
+
+}
+
+html,
+body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+}
+
+body {
+    background-color: var(--dharma-bg);
+    color: var(--dharma-text-main);
+    font-family: $font-family-body;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6,
+.navbar-brand {
+    font-family: $font-family-headings;
+    letter-spacing: -0.02em;
+}
+
+main {
+    flex: 1;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color $transition-fast;
+}
+
+// HTMX Loading Indicator
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}
+
+// Ocultar iconos nativos de revelar contrasena de navegadores (Edge, Chrome, Chromium)
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}

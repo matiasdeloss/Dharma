@@ -1,0 +1,220 @@
+// ==========================================================================
+// Media Detail Page (Letterboxd Cinema Style) - Dharma Cinema
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// 1. Variables Configurables (Edita todos los tamaños y medidas aquí)
+// --------------------------------------------------------------------------
+$media-backdrop-height: 480px;               // Altura limpia del fotograma superior
+$media-backdrop-position: center 20%;        // Enfoque del fotograma
+$media-content-overlap: -150px;              // Cuánto sube el contenido sobre el fotograma
+
+$media-poster-max-height: 410px;             // Altura del póster
+$media-poster-radius: 12px;                  // Redondeo del póster
+
+$media-stream-pill-size: 36px;               // Tamaño de los logos de streaming
+$media-stream-pill-radius: 8px;              // Redondeo de los logos de streaming
+
+$media-cast-avatar-size: 44px;               // Diámetro de las fotos circulares de actores
+
+// --------------------------------------------------------------------------
+// 2. Fotograma Superior Limpio (Letterboxd Style - Cero texto adentro)
+// --------------------------------------------------------------------------
+.media-backdrop-cinema {
+    position: relative;
+    width: 100%;
+    height: $media-backdrop-height;
+    background-size: cover;
+    background-position: $media-backdrop-position;
+    overflow: hidden;
+
+    // Disolución continua y perfecta hacia el fondo de la página (#222831)
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            to bottom,
+            rgba(34, 40, 49, 0) 0%,
+            rgba(34, 40, 49, 0.08) 35%,
+            rgba(34, 40, 49, 0.50) 65%,
+            rgba(34, 40, 49, 0.88) 88%,
+            #222831 100%
+        );
+    }
+}
+
+// --------------------------------------------------------------------------
+// 3. Contenedor de Información (Overlap elegante con el fotograma)
+// --------------------------------------------------------------------------
+.media-content-wrapper {
+    position: relative;
+    z-index: 2;
+    margin-top: $media-content-overlap;
+}
+
+// --------------------------------------------------------------------------
+// 4. Póster Principal (Letterboxd Bridge)
+// --------------------------------------------------------------------------
+.detail-poster {
+    max-height: $media-poster-max-height;
+    width: 100%;
+    object-fit: cover;
+    border-radius: $media-poster-radius;
+    border: 1px solid var(--dharma-border);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+}
+
+// --------------------------------------------------------------------------
+// 5. Cajas Laterales de Acciones y Notas (Columna Derecha)
+// --------------------------------------------------------------------------
+.badge-media-type {
+    background-color: rgba(223, 208, 184, 0.12);
+    color: var(--dharma-cream);
+    font-weight: 600;
+    border: 1px solid rgba(223, 208, 184, 0.35);
+    border-radius: $radius-sm;
+    padding: 0.35em 0.7em;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.media-sidebar-panel {
+    background-color: var(--dharma-surface);
+    border: 1px solid var(--dharma-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+
+    .rating-item-flat {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        text-decoration: none;
+        color: #f8fafc;
+        font-size: 0.86rem;
+        transition: opacity $transition-fast, color $transition-fast;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &.rating-imdb-link:hover {
+            color: #f5c518;
+        }
+    }
+}
+
+// --------------------------------------------------------------------------
+// 6. Plataformas de Streaming ("Disponible en:")
+// --------------------------------------------------------------------------
+.provider-pill-inline {
+    width: $media-stream-pill-size;
+    height: $media-stream-pill-size;
+    border-radius: $media-stream-pill-radius;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background-color: #1a2026;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform $transition-fast, border-color $transition-fast;
+    cursor: pointer;
+
+    &:hover {
+        transform: translateY(-2px) scale(1.12);
+        border-color: var(--dharma-accent);
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+// --------------------------------------------------------------------------
+// 7. Badges de Calificaciones (TMDB, IMDb, Rotten, Metacritic, Dharma)
+// --------------------------------------------------------------------------
+.badge-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35em 0.7em;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border: 1px solid var(--dharma-border);
+    background-color: rgba(34, 40, 49, 0.85);
+    color: #f8fafc;
+    transition: transform $transition-fast, border-color $transition-fast;
+    cursor: default;
+
+    strong {
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    small {
+        font-size: 0.75em;
+        opacity: 0.7;
+    }
+
+    &.badge-imdb {
+        cursor: pointer;
+
+        &:hover {
+            border-color: #f5c518;
+            background-color: rgba(245, 197, 24, 0.12);
+        }
+    }
+
+    &.badge-dharma {
+        border-color: rgba(212, 175, 55, 0.45);
+        background-color: rgba(212, 175, 55, 0.08);
+    }
+}
+
+.badge-imdb-logo {
+    background-color: #f5c518;
+    color: #000000;
+    font-weight: 900;
+    font-size: 0.68rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    display: inline-block;
+}
+
+.badge-meta-logo {
+    background-color: #66cc33;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.68rem;
+    width: 17px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    line-height: 1;
+}
+
+// --------------------------------------------------------------------------
+// 8. Actores / Cast y Barra Lateral
+// --------------------------------------------------------------------------
+.cast-avatar {
+    width: $media-cast-avatar-size;
+    height: $media-cast-avatar-size;
+    object-fit: cover;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.sticky-sidebar {
+    top: 80px;
+}

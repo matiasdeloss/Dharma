@@ -1,0 +1,29 @@
+// ==========================================================================
+// Modals & Offcanvases
+// ==========================================================================
+
+.modal-content-dharma {
+    background-color: var(--dharma-surface);
+    color: var(--dharma-text-main);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-lg;
+    box-shadow: $shadow-modal;
+}
+
+.modal-header-dharma {
+    border-bottom: 1px solid var(--dharma-border);
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-footer-dharma {
+    border-top: 1px solid var(--dharma-border);
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-poster-preview {
+    max-height: 240px;
+    width: 100%;
+    object-fit: cover;
+    border-radius: $radius-md;
+    box-shadow: $shadow-card;
+}

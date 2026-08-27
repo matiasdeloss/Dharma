@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450" width="300" height="450">
+  <rect width="300" height="450" fill="#1f252b"/>
+  <rect x="2" y="2" width="296" height="446" fill="none" stroke="#2c3440" stroke-width="4"/>
+  <circle cx="150" cy="180" r="45" fill="#14181c" stroke="#2c3440" stroke-width="2"/>
+  <path d="M142 165 L165 180 L142 195 Z" fill="#00e054"/>
+  <text x="150" y="270" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#9ab" text-anchor="middle">Sin Imagen Disponible</text>
+  <text x="150" y="295" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#00e054" text-anchor="middle">Dharma</text>
+</svg>

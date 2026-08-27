@@ -1,0 +1,130 @@
+// ==========================================================================
+// Toast Notifications - Dharma Cinema Architecture
+// ==========================================================================
+
+.toast-dharma {
+    position: fixed;
+    top: 38px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    min-width: 360px;
+    max-width: 480px;
+    padding: 13px 36px;
+    border-radius: 12px;
+    animation: fadeInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    pointer-events: auto;
+    text-align: center;
+
+    &.toast-hiding {
+        animation: fadeOutUp 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+}
+
+.toast-dharma-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 3px;
+
+    i {
+        font-size: 19px;
+        line-height: 1;
+    }
+}
+
+.toast-dharma-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.toast-dharma-body {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.95;
+    line-height: 1.4;
+    color: #f8fafc;
+}
+
+// --------------------------------------------------------------------------
+// Variantes de Color Oficiales Dharma
+// --------------------------------------------------------------------------
+
+// 1. Success: Nuestro verde (Sage vivo y elegante)
+.toast-success {
+    background-color: #212923;
+    color: #ffffff;
+    border: 1px solid rgba(130, 167, 126, 0.4);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(105, 117, 101, 0.18);
+
+    .toast-dharma-header {
+        color: #82a77e;
+    }
+}
+
+// 2. Info: Nuestro amarillo (Cinema Gold / Dharma Accent)
+.toast-info {
+    background-color: #28261e;
+    color: #ffffff;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(212, 175, 55, 0.16);
+
+    .toast-dharma-header {
+        color: var(--dharma-accent);
+    }
+}
+
+// 3. Error / Danger: Rojo apagado/coral cinematográfico
+.toast-error,
+.toast-danger {
+    background-color: #2b2123;
+    color: #ffffff;
+    border: 1px solid rgba(224, 108, 117, 0.45);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(224, 108, 117, 0.18);
+
+    .toast-dharma-header {
+        color: #e06c75;
+    }
+}
+
+// 4. Warning / Auth: Amarillo cálido dorado
+.toast-warning,
+.toast-auth {
+    background-color: #28261e;
+    color: #ffffff;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(212, 175, 55, 0.18);
+
+    .toast-dharma-header {
+        color: var(--dharma-accent);
+    }
+}
+
+// --------------------------------------------------------------------------
+// Animaciones Suaves de Entrada (fadeInDown) y Salida (fadeOutUp)
+// --------------------------------------------------------------------------
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-22px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes fadeOutUp {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-22px);
+    }
+}

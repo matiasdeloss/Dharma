@@ -1,0 +1,28 @@
+// ==========================================================================
+// Main SCSS Manifest - Dharma Cinema Platform
+// ==========================================================================
+
+// 1. External Vendor Dependencies
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'bootstrap/scss/bootstrap';
+
+// 2. Base & Design Tokens
+@import 'base/variables';
+@import 'base/base';
+
+// 3. Components
+@import 'components/navbar';
+@import 'components/cards';
+@import 'components/buttons';
+@import 'components/modals';
+@import 'components/toasts';
+@import 'components/ratings';
+@import 'components/sliders';
+
+// 4. Pages & Feature Views
+@import 'pages/hero';
+@import 'pages/auth';
+@import 'pages/media_detail';
+
+// 5. Utilities
+@import 'utilities/utilities';

@@ -1,0 +1,51 @@
+// ==========================================================================
+// Standardized Buttons
+// ==========================================================================
+
+.btn-cine-primary {
+    background-color: var(--dharma-accent);
+    color: #222831;
+    font-weight: 700;
+    border: none;
+    border-radius: $radius-pill;
+    padding: 0.60rem 1.35rem;
+    transition: background-color $transition-fast, transform $transition-fast, box-shadow $transition-fast;
+
+    &:hover, &:focus {
+        background-color: var(--dharma-accent-hover);
+        color: #222831;
+        transform: scale(1.04);
+        box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35);
+    }
+
+    &:active {
+        transform: scale(0.97);
+    }
+}
+
+.btn-cine-secondary {
+    background-color: var(--dharma-surface-hover);
+    color: var(--dharma-text-main);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-pill;
+    padding: 0.60rem 1.35rem;
+    font-weight: 600;
+    transition: background-color $transition-fast, border-color $transition-fast, transform $transition-fast;
+
+    &:hover {
+        background-color: #3b4554;
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.25);
+        transform: scale(1.04);
+    }
+
+    &:active {
+        transform: scale(0.97);
+    }
+}
+
+.btn-pill-compact {
+    font-size: 0.8rem;
+    padding: 0.30rem 0.6rem;
+    border-radius: $radius-pill;
+}

@@ -1,0 +1,54 @@
+// ==========================================================================
+// Standardized Design Tokens & Color Palette - Dharma
+// ==========================================================================
+
+// Base Backgrounds
+$color-bg-primary: #222831;
+$color-bg-surface: #393e46;
+$color-bg-surface-hover: #484f59;
+$color-bg-elevated: #2d333b;
+$color-bg-backdrop: #191e24;
+
+// Accent Colors
+$color-accent-primary: #d4af37;
+$color-accent-primary-hover: #bfa02f;
+$color-accent-cream: #dfd0b8;
+$color-accent-sage: #697565;
+$color-accent-sage-hover: #596455;
+$color-accent-taupe: #948979;
+$color-accent-gold: #d4af37;
+$color-accent-gold-hover: #bfa02f;
+$color-accent-info: #67b0d1;
+$color-accent-purple: #b993d6;
+$color-accent-danger: #e06c75;
+
+// Text Hierarchy
+$color-text-main: #f8fafc;
+$color-text-secondary: #948979;
+$color-text-muted: #796e5f;
+$color-text-dim: #5c5346;
+
+// Borders
+$color-border-subtle: #4f5762;
+$color-border-default: #4f5762;
+$color-border-strong: #948979;
+
+// Border Radii
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 16px;
+$radius-pill: 50rem;
+
+// Shadows
+$shadow-card: 0 8px 16px rgba(0, 0, 0, 0.4);
+$shadow-dropdown: 0 12px 28px rgba(0, 0, 0, 0.65);
+$shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.8);
+
+// Transitions
+$transition-fast: 0.15s ease;
+$transition-normal: 0.25s ease;
+
+// Typography
+$font-family-body: 'Plus Jakarta Sans', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+$font-family-headings: 'Outfit', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+$font-family-sans: $font-family-body;

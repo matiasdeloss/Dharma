@@ -1,0 +1,301 @@
+// ==========================================================================
+// Authentication Components (Split Screen 50/50 - Criterion / HBO Max Style)
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// 🎛️ TAMAÑOS Y MEDIDAS DEL LOGIN & REGISTRO (Editá todo acá mismo)
+// --------------------------------------------------------------------------
+$auth-title-size: 2.6rem;           // Tamaño de "Bienvenido a Dharma" (entra en 1 línea)
+$auth-title-line-height: 1.15;      // Altura de línea del título
+$auth-title-letter-spacing: -0.04em; // Espaciado entre letras
+
+$auth-subtitle-size: 0.84rem;       // Tamaño del subtítulo
+$auth-subtitle-line-height: 1.45;   // Altura de línea del subtítulo
+$auth-subtitle-margin-bottom: 2.25rem; // Separación hacia los campos
+
+$auth-label-size: 0.9rem;          // Tamaño de etiquetas ("Correo Electrónico", "Contraseña")
+$auth-input-font-size: 0.92rem;     // Tamaño del texto que escribe el usuario
+$auth-input-padding-y: 0.75rem;     // Alto / padding vertical de las cápsulas
+$auth-input-padding-x: 1.25rem;     // Padding horizontal de las cápsulas
+$auth-input-icon-size: 1.1rem;      // Tamaño de los íconos dentro del input (📧, 🔒)
+$auth-input-margin-bottom: 1.35rem; // Espacio entre cada campo
+
+$auth-check-size: 0.84rem;          // Tamaño de letra de "Recordarme en este equipo"
+
+$auth-btn-font-size: 0.95rem;       // Tamaño de letra del botón
+$auth-btn-padding-y: 0.65rem;       // Alto del botón
+$auth-btn-padding-x: 3rem;          // Ancho del botón
+
+$auth-form-max-width: 390px;        // Ancho máximo del formulario
+$auth-footer-font-size: 0.875rem;   // Tamaño del enlace inferior ("¿Aún no tienes cuenta?")
+
+// --------------------------------------------------------------------------
+// Estructura y Componentes
+.auth-split-wrapper {
+    display: flex;
+    min-height: calc(100vh - 65px);
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    background-color: var(--dharma-bg);
+
+    @media (max-width: 991.98px) {
+        flex-direction: column;
+    }
+}
+
+.auth-split-form-col {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+    background-color: var(--dharma-bg);
+    position: relative;
+    z-index: 2;
+
+    @media (max-width: 575.98px) {
+        padding: 2.5rem 1.5rem;
+    }
+}
+
+.auth-split-form-inner {
+    width: 100%;
+    max-width: $auth-form-max-width;
+
+    .auth-title {
+        font-family: $font-family-headings;
+        font-size: $auth-title-size;
+        font-weight: 800;
+        text-align: center;
+        letter-spacing: $auth-title-letter-spacing;
+        color: var(--dharma-text-main);
+        margin-bottom: 0.45rem;
+        line-height: $auth-title-line-height;
+        white-space: nowrap;
+
+        .text-accent {
+            color: var(--dharma-accent);
+            text-shadow: 0 0 32px rgba(212, 175, 55, 0.4);
+        }
+    }
+
+    .auth-subtitle {
+        font-size: $auth-subtitle-size;
+        color: var(--dharma-cream);
+        margin-bottom: $auth-subtitle-margin-bottom;
+        line-height: $auth-subtitle-line-height;
+        text-align: center;
+    }
+}
+
+// Integrated Input Fields with embedded icons (No boxed frame)
+.auth-input-wrapper {
+    margin-bottom: $auth-input-margin-bottom;
+
+    .auth-label {
+        font-size: $auth-label-size;
+        font-weight: 500;
+        color: var(--dharma-text-main);
+        margin-bottom: 0.45rem;
+        display: block;
+    }
+
+    .auth-input-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        .auth-field-icon {
+            position: absolute;
+            left: 1.15rem;
+            color: var(--dharma-accent);
+            font-size: $auth-input-icon-size;
+            pointer-events: none;
+            transition: color $transition-fast;
+            z-index: 2;
+        }
+
+        .form-control {
+            background-color: #2a323d;
+            border: 1px solid var(--dharma-surface);
+            border-radius: 12px;
+            padding: $auth-input-padding-y 2.85rem $auth-input-padding-y 3rem;
+            font-size: $auth-input-font-size;
+            color: #ffffff;
+            transition: all $transition-fast;
+
+            &::placeholder {
+                color: #6b7280;
+            }
+
+            &:focus {
+                background-color: #313a46;
+                border-color: var(--dharma-cream);
+                box-shadow: none;
+                color: #ffffff;
+
+                & ~ .auth-field-icon {
+                    color: var(--dharma-cream);
+                }
+            }
+
+            &.is-invalid {
+                border-color: $color-accent-danger;
+                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+            }
+
+            &::-ms-reveal,
+            &::-ms-clear {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+            }
+
+            &::-webkit-credentials-auto-fill-button {
+                visibility: hidden;
+                pointer-events: none;
+                position: absolute;
+                right: 0;
+            }
+        }
+
+        .auth-password-toggle {
+            position: absolute;
+            right: 1.15rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            color: var(--dharma-accent);
+            font-size: 1.22rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: color $transition-fast, transform $transition-fast, opacity $transition-fast, visibility $transition-fast, text-shadow $transition-fast;
+            z-index: 3;
+
+            &.is-active {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+                color: var(--dharma-accent);
+            }
+
+            &:focus-visible {
+                outline: none;
+                color: #ffffff;
+            }
+        }
+    }
+}
+
+.auth-check-label {
+    color: var(--dharma-cream) !important;
+    font-size: $auth-check-size;
+    font-weight: 500;
+}
+
+// Centered Action Button with configurable size
+.btn-auth-submit {
+    font-size: $auth-btn-font-size !important;
+    padding: 12px 25px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform $transition-fast, box-shadow $transition-fast, background-color $transition-fast;
+
+    &:hover {
+        transform: scale(1.03); 
+    }
+}
+
+// Footer Link
+.auth-footer-seamless {
+    margin-top: 1rem;
+    padding-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: $auth-footer-font-size;
+    color: var(--dharma-cream);
+
+    a {
+        color: var(--dharma-accent);
+        font-weight: 600;
+        text-decoration: none;
+        transition: color $transition-fast;
+
+        &:hover {
+            color: var(--dharma-accent-hover);
+            text-decoration: underline;
+        }
+    }
+}
+
+// Right 50%: Fullscreen HD Cinema Still Panel
+.auth-split-media-col {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--dharma-surface);
+    min-height: 100%;
+
+    @media (max-width: 991.98px) {
+        display: none;
+    }
+
+    .split-cinema-still {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        filter: brightness(0.95) contrast(1.04);
+        transition: background-image 0.5s ease;
+    }
+
+    // Seam Gradient where the photo meets the left panel
+    .split-seam-gradient {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 120px;
+        background: linear-gradient(90deg, #222831 0%, rgba(34, 40, 49, 0) 100%);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    // Discrete credit tag on the photo
+    .split-photo-credit {
+        position: absolute;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 3;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #e2e8f0;
+        background-color: rgba(22, 28, 35, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.35rem 0.85rem;
+        border-radius: $radius-pill;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        pointer-events: none;
+    }
+}
