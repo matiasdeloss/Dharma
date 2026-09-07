@@ -1,51 +1,159 @@
 // ==========================================================================
-// Standardized Buttons
+// Botones Dharma
 // ==========================================================================
+// Sistema unico de botones del proyecto. Antes habia solo dos variantes
+// (`primary` y `secondary`) y todo lo que no encajaba caia en botones de
+// Bootstrap — `btn-outline-danger` para "Ver trailer", `btn-outline-info` para
+// "En tu Watchlist", `btn-outline-success` para la nota propia — cada uno con
+// su propio rojo, celeste y verde ajenos a la paleta.
+//
+// Las cinco variantes cubren toda la escala de intencion:
+//
+//   primary    accion principal de la pantalla (dorado solido)
+//   secondary  accion secundaria (superficie)
+//   ghost      accion terciaria, no compite (contorno sobre transparente)
+//   danger     accion destructiva (contorno rojo, NUNCA relleno)
+//   active     estado "ya hecho" (azul de watchlist), no una accion nueva
+//
+// Y dos modificadores de tamano: `.btn-pill-compact` y `.btn-pill-lg`.
 
+// Base comun a todas las variantes.
+%btn-cine-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+    border-radius: $radius-pill;
+    padding: 0.6rem 1.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color $transition-fast,
+                border-color $transition-fast,
+                color $transition-fast,
+                transform $transition-fast,
+                box-shadow $transition-fast;
+
+    &:active {
+        transform: scale(0.97);
+    }
+
+    &:disabled,
+    &.disabled {
+        opacity: 0.55;
+        pointer-events: none;
+    }
+}
+
+// --------------------------------------------------------------------------
+// Variantes
+// --------------------------------------------------------------------------
+
+// Accion principal. El texto va oscuro porque el dorado es claro: blanco sobre
+// #d4af37 no llega al contraste minimo.
 .btn-cine-primary {
+    @extend %btn-cine-base;
+
     background-color: var(--dharma-accent);
     color: #222831;
     font-weight: 700;
-    border: none;
-    border-radius: $radius-pill;
-    padding: 0.60rem 1.35rem;
-    transition: background-color $transition-fast, transform $transition-fast, box-shadow $transition-fast;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
         background-color: var(--dharma-accent-hover);
         color: #222831;
         transform: scale(1.04);
         box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35);
     }
-
-    &:active {
-        transform: scale(0.97);
-    }
 }
 
+// Accion secundaria.
 .btn-cine-secondary {
-    background-color: var(--dharma-surface-hover);
-    color: var(--dharma-text-main);
-    border: 1px solid var(--dharma-border);
-    border-radius: $radius-pill;
-    padding: 0.60rem 1.35rem;
-    font-weight: 600;
-    transition: background-color $transition-fast, border-color $transition-fast, transform $transition-fast;
+    @extend %btn-cine-base;
 
-    &:hover {
+    background-color: var(--dharma-surface-hover);
+    border-color: var(--dharma-border);
+    color: var(--dharma-text-main);
+
+    &:hover,
+    &:focus {
         background-color: #3b4554;
-        color: #fff;
         border-color: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
         transform: scale(1.04);
     }
+}
 
-    &:active {
-        transform: scale(0.97);
+// Accion terciaria: existe pero no pide atencion. Sin fondo, para que no
+// compita con la principal cuando estan una al lado de la otra.
+.btn-cine-ghost {
+    @extend %btn-cine-base;
+
+    background-color: transparent;
+    border-color: var(--dharma-border);
+    color: var(--dharma-text-secondary);
+
+    &:hover,
+    &:focus {
+        background-color: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.25);
+        color: var(--dharma-text-main);
     }
 }
 
+// Destructiva. Contorno y nunca relleno solido: borrar no es la accion que uno
+// quiere que el ojo encuentre primero en un formulario.
+.btn-cine-danger {
+    @extend %btn-cine-base;
+
+    background-color: transparent;
+    border-color: rgba(224, 108, 117, 0.35);
+    color: $color-accent-danger;
+
+    &:hover,
+    &:focus {
+        background-color: rgba(224, 108, 117, 0.14);
+        border-color: rgba(224, 108, 117, 0.6);
+        color: #ffffff;
+    }
+}
+
+// Estado "ya hecho", no una accion nueva: se lee como un indicador encendido.
+// Azul porque en este proyecto la watchlist es azul (ver `.text-accent-info`).
+.btn-cine-active {
+    @extend %btn-cine-base;
+
+    background-color: rgba(103, 176, 209, 0.12);
+    border-color: rgba(103, 176, 209, 0.4);
+    color: $color-accent-info;
+
+    &:hover,
+    &:focus {
+        background-color: rgba(103, 176, 209, 0.2);
+        border-color: rgba(103, 176, 209, 0.65);
+        color: $color-accent-info;
+    }
+}
+
+// --------------------------------------------------------------------------
+// Tamanos
+// --------------------------------------------------------------------------
 .btn-pill-compact {
     font-size: 0.8rem;
-    padding: 0.30rem 0.6rem;
-    border-radius: $radius-pill;
+    padding: 0.3rem 0.75rem;
+    gap: 0.35rem;
+}
+
+.btn-pill-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1.75rem;
+}
+
+// Alias del nombre viejo del boton de borrar del modal, para no tener que
+// tocar `log-modal.blade.php` mientras se esta editando en paralelo.
+.btn-danger-ghost {
+    @extend .btn-cine-danger;
 }

@@ -19,7 +19,11 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-cine sticky-top">
+    {{-- `navbar-over-hero` deja el navbar transparente mientras estamos arriba
+         de todo, para que el fotograma del hero (home) o de la banda de
+         encabezado (diario, watchlist) llegue al borde de la ventana. Vuelve a
+         su fondo solido apenas se scrollea (ver modules/navbar.js). --}}
+    <nav class="navbar navbar-expand-lg navbar-cine sticky-top {{ request()->routeIs('home', 'reviews.index', 'watchlist.index') ? 'navbar-over-hero' : '' }}">
         <div class="container">
             <!-- Brand -->
             <a class="navbar-brand text-white" href="{{ route('home') }}">
@@ -187,7 +191,10 @@
     </div>
 
     <!-- Main Content -->
-    <main class="{{ request()->routeIs('login', 'register', 'media.show') ? 'p-0 m-0' : 'py-4' }}">
+    {{-- Las vistas que arrancan con un fotograma a sangre completa manejan su
+         propio espaciado: cualquier padding aca dejaria una franja entre el
+         navbar y la imagen. --}}
+    <main class="{{ request()->routeIs('login', 'register', 'media.show', 'home', 'reviews.index', 'watchlist.index') ? 'p-0 m-0' : 'py-4' }}">
         @yield('content')
     </main>
 
@@ -195,18 +202,19 @@
     <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered rate-modal-dialog">
             <div class="modal-content modal-content-dharma" id="logModalContent">
-                <!-- HTMX will load the form here -->
-                <div class="p-5 text-center">
+                {{-- HTMX reemplaza esto con el formulario --}}
+                <div class="modal-loading">
                     <div class="spinner-border text-accent" role="status">
                         <span class="visually-hidden">Cargando...</span>
                     </div>
+                    <span>Cargando</span>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="mt-auto py-5 border-top border-secondary-subtle bg-dark text-secondary">
+    <footer class="site-footer mt-auto py-5">
         <div class="container text-center">
             <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
                 <i class="bi bi-film text-accent"></i>

@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\MediaItem;
 use App\Models\Review;
-use App\Models\User;
 use App\Models\Watchlist;
-use App\Services\TmdbService;
 use App\Services\OmdbService;
+use App\Services\TmdbService;
 use App\Traits\HasUserStats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +20,7 @@ class MediaController extends Controller
     protected const HERO_BACKDROP_FILE = 'MV5BMzdkNTdhMzItYjVhOC00M2RmLThmOTAtNmZlNDJkOTc2ODk2XkEyXkFqcGc@._V1_FMjpg_UX1280_.jpg';
 
     protected TmdbService $tmdb;
+
     protected OmdbService $omdb;
 
     public function __construct(TmdbService $tmdb, OmdbService $omdb)
@@ -44,7 +44,7 @@ class MediaController extends Controller
             ->take(6)
             ->get();
 
-        $userId = Auth::id() ?? User::first()?->id;
+        $userId = Auth::id();
 
         $stats = $this->getHeroStats(Auth::id());
 
@@ -73,7 +73,7 @@ class MediaController extends Controller
             'user' => $user,
             'isConfigured' => $this->tmdb->isConfigured(),
             'heroBackdrop' => [
-                'url' => asset('images/auth/' . self::HERO_BACKDROP_FILE),
+                'url' => asset('images/auth/'.self::HERO_BACKDROP_FILE),
                 'title' => '',
             ],
         ]);
@@ -91,6 +91,7 @@ class MediaController extends Controller
             if ($request->header('HX-Request')) {
                 return response('');
             }
+
             return view('media.search', ['results' => [], 'query' => '']);
         }
 
@@ -99,7 +100,7 @@ class MediaController extends Controller
             return in_array($item['media_type'] ?? '', ['movie', 'tv']);
         });
 
-        $userId = Auth::id() ?? User::first()?->id;
+        $userId = Auth::id();
         $results = $this->attachWatchlistStatus($results, $userId);
 
         // If request comes from HTMX live search input
@@ -137,24 +138,38 @@ class MediaController extends Controller
             ->first();
 
         // Get currently logged-in user (or default demo user if unauthenticated for testing)
-        $userId = Auth::id() ?? User::first()?->id;
+        $userId = Auth::id();
 
-        $userReview = null;
+        // Un título puede tener N entradas del mismo usuario (re-visionados):
+        // la ficha trabaja con la lista completa y elige cuál mostrar.
+        $userEntries = collect();
+        $userReview = null;   // la entrada más reciente: "Tu reseña"
+        $userScore = null;    // la entrada calificada más reciente: "Tu nota"
         $inWatchlist = false;
 
         if ($userId && $mediaItem) {
-            $userReview = Review::where('user_id', $userId)
-                ->where('media_item_id', $mediaItem->id)
-                ->first();
+            $userEntries = Review::entriesFor($userId, $mediaItem->id)->get();
+
+            $userReview = $userEntries->first();
+
+            // Un re-visionado sin nota no borra la nota que ya habías puesto.
+            $userScore = $userEntries->first(fn ($entry) => $entry->rating !== null)
+                ?? $userReview;
 
             $inWatchlist = Watchlist::where('user_id', $userId)
                 ->where('media_item_id', $mediaItem->id)
                 ->exists();
         }
 
-        // Community reviews for this media item
+        // Reseñas de la comunidad: una sola por usuario (la última que tenga
+        // texto). Sin deduplicar, quien registra tres visionados aparecía tres
+        // veces seguidas en la lista.
         $communityReviews = $mediaItem
-            ? $mediaItem->reviews()->with('user')->latest()->take(10)->get()
+            ? Review::latestPerUser($mediaItem->id, fn ($q) => $q->whereNotNull('review_text')->where('review_text', '!=', ''))
+                ->with('user')
+                ->latest()
+                ->take(10)
+                ->get()
             : collect();
 
         // Streaming Watch Providers (JustWatch / TMDB)
@@ -164,15 +179,61 @@ class MediaController extends Controller
         $imdbId = $details['imdb_id'] ?? $details['external_ids']['imdb_id'] ?? null;
         $omdbRatings = $this->omdb->getRatings($imdbId);
 
-        // Dharma Community Rating
-        $dharmaAvg = $mediaItem ? $mediaItem->reviews()->whereNotNull('rating')->avg('rating') : null;
-        $dharmaCount = $mediaItem ? $mediaItem->reviews()->whereNotNull('rating')->count() : 0;
+        // Dharma Community Rating. También una fila por usuario: si no, quien
+        // vio algo cinco veces pesaba cinco veces en el promedio "de todos".
+        $dharmaAvg = null;
+        $dharmaCount = 0;
+
+        if ($mediaItem) {
+            $dharmaRatings = Review::latestPerUser($mediaItem->id, fn ($q) => $q->whereNotNull('rating'));
+
+            $dharmaAvg = (clone $dharmaRatings)->avg('rating');
+            $dharmaCount = (clone $dharmaRatings)->count();
+        }
+
+        // Títulos relacionados: recomendaciones con fallback a similares. Ambos
+        // ya venían en el append_to_response de TmdbService y no se usaban.
+        //
+        // Se arma acá y no en la vista porque necesita consultar la watchlist
+        // del usuario: en Blade no hay forma de marcarle el estado a cada card.
+        $relatedPool = ! empty($details['recommendations']['results'])
+            ? $details['recommendations']['results']
+            : ($details['similar']['results'] ?? []);
+
+        $related = [];
+        $relatedSeen = [];
+
+        foreach ($relatedPool as $item) {
+            $itemId = $item['id'] ?? null;
+            $itemType = $item['media_type'] ?? $type; // 'similar' no trae media_type
+
+            if (! $itemId || isset($relatedSeen[$itemId]) || empty($item['poster_path'])) {
+                continue;
+            }
+
+            if (! in_array($itemType, ['movie', 'tv'], true)) {
+                continue;
+            }
+
+            $item['media_type'] = $itemType;
+            $relatedSeen[$itemId] = true;
+            $related[] = $item;
+
+            if (count($related) >= 18) {
+                break;
+            }
+        }
+
+        $related = $this->attachWatchlistStatus($related, $userId);
 
         return view('media.show', [
             'media' => $details,
             'type' => $type,
+            'related' => $related,
             'mediaItem' => $mediaItem,
             'userReview' => $userReview,
+            'userScore' => $userScore,
+            'userEntries' => $userEntries,
             'inWatchlist' => $inWatchlist,
             'communityReviews' => $communityReviews,
             'watchProviders' => $watchProviders,

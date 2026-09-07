@@ -25,8 +25,93 @@
         }
     }
 
-    // Cast members
-    $cast = array_slice($media['credits']['cast'] ?? [], 0, 6);
+    $imageBase = config('services.tmdb.image_base_url', 'https://image.tmdb.org/t/p');
+
+    // Reparto: se muestran 12 y el resto queda detras de "ver reparto completo"
+    // (antes se cortaba en 6 sin forma de ver los demas).
+    $castAll = array_values(array_filter($media['credits']['cast'] ?? [], fn ($p) => !empty($p['name'])));
+    $castPrimary = array_slice($castAll, 0, 12);
+    $castExtra = array_slice($castAll, 12, 36);
+
+    // Equipo tecnico agrupado por rol (de todo el crew solo se usaba el director).
+    $crewIndex = [];
+    foreach ($media['credits']['crew'] ?? [] as $member) {
+        if (empty($member['name']) || empty($member['job'])) {
+            continue;
+        }
+        $crewIndex[$member['job']][$member['name']] = true;
+    }
+
+    $crewGroups = [];
+    if ($type === 'tv' && !empty($media['created_by'])) {
+        $creators = array_slice(array_filter(array_column($media['created_by'], 'name')), 0, 4);
+        if (!empty($creators)) {
+            $crewGroups['Creada por'] = $creators;
+        }
+    }
+    foreach ([
+        'Dirección' => ['Director'],
+        'Guion' => ['Screenplay', 'Writer', 'Story'],
+        'Fotografía' => ['Director of Photography', 'Cinematography'],
+        'Música' => ['Original Music Composer', 'Music'],
+        'Montaje' => ['Editor'],
+        'Producción' => ['Producer'],
+    ] as $crewLabel => $crewJobs) {
+        $crewNames = [];
+        foreach ($crewJobs as $crewJob) {
+            foreach (array_keys($crewIndex[$crewJob] ?? []) as $crewName) {
+                $crewNames[$crewName] = true;
+            }
+        }
+        if (!empty($crewNames)) {
+            $crewGroups[$crewLabel] = array_slice(array_keys($crewNames), 0, 4);
+        }
+    }
+
+    // $related lo arma MediaController::show, que ademas le marca a cada card
+    // si ya esta en la watchlist del usuario.
+
+    // Ficha tecnica: TMDB manda campos distintos para pelicula y serie.
+    $statusLabels = [
+        'Released' => 'Estrenada',
+        'Post Production' => 'Postproducción',
+        'In Production' => 'En producción',
+        'Planned' => 'Anunciada',
+        'Rumored' => 'Rumoreada',
+        'Canceled' => 'Cancelada',
+        'Returning Series' => 'En emisión',
+        'Ended' => 'Finalizada',
+        'Pilot' => 'Piloto',
+    ];
+    $status = !empty($media['status']) ? ($statusLabels[$media['status']] ?? $media['status']) : null;
+
+    $formatRuntime = function ($minutes) {
+        $minutes = (int) $minutes;
+        if ($minutes <= 0) {
+            return null;
+        }
+        return $minutes >= 60
+            ? floor($minutes / 60) . 'h ' . ($minutes % 60) . 'm'
+            : $minutes . 'm';
+    };
+
+    $episodeRuntime = null;
+    if (!empty($media['episode_run_time']) && is_array($media['episode_run_time'])) {
+        $episodeRuntime = (int) round(array_sum($media['episode_run_time']) / max(count($media['episode_run_time']), 1));
+    }
+
+    $seasons = array_values(array_filter(
+        $media['seasons'] ?? [],
+        fn ($season) => ($season['episode_count'] ?? 0) > 0
+    ));
+
+    $networks = array_filter(array_column($media['networks'] ?? [], 'name'));
+    $companies = array_slice(array_filter(array_column($media['production_companies'] ?? [], 'name')), 0, 6);
+    $countries = array_filter(array_column($media['production_countries'] ?? [], 'name'));
+    $languages = array_filter(array_map(
+        fn ($lang) => ($lang['name'] ?? '') ?: ($lang['english_name'] ?? null),
+        $media['spoken_languages'] ?? []
+    ));
 
     // Trailer video
     $trailer = null;
@@ -144,7 +229,7 @@
             <div class="d-flex flex-wrap align-items-center gap-2 pt-2">
                 <!-- Log / Review Button (HTMX Loaded) -->
                 @include('reviews.partials.log-button-state', [
-                    'review' => $userReview,
+                    'entries' => $userEntries,
                     'type' => $type,
                     'tmdbId' => $media['id']
                 ])
@@ -168,181 +253,487 @@
             </div>
         </div>
 
-        <!-- Col 3: Panel Lateral Unificado (Sin card dentro de card) -->
+        {{-- Col 3: Notas. Tu nota primero, despues la de Dharma, y abajo la
+             critica externa. Sin cards a proposito: son lineas de datos
+             sobre el fondo de la pagina, separadas por filetes. --}}
         <div class="col-lg-3">
-            <div class="media-sidebar-panel">
-                <!-- Encabezado de Calificaciones -->
-                <div class="text-xs text-uppercase fw-bold text-secondary mb-2 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center justify-content-between">
-                    <span>Calificaciones</span>
-                    <i class="bi bi-star-half text-accent"></i>
-                </div>
+            <div class="hero-scores">
+                @include('media.partials.hero-score-mine', [
+                    'review' => $userScore,
+                    'type' => $type,
+                    'tmdbId' => $media['id'],
+                ])
 
-                <!-- Tira de Notas (Limpia y plana, sin cajitas anidadas) -->
+                @include('media.partials.hero-score-dharma', [
+                    'avg' => $dharmaAvg,
+                    'count' => $dharmaCount,
+                ])
+
                 @include('media.partials.ratings-strip')
 
-                <!-- Tu Nota / Registro Personal (Integrado sin card dentro de card) -->
-                @if($userReview)
-                    <div class="pt-3 mt-3 border-top border-secondary border-opacity-25">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-journal-check text-success"></i>
-                                <span class="text-xs text-uppercase fw-bold text-success tracking-wider">Tu Nota</span>
-                            </div>
-                            @if($userReview->rating !== null)
-                                <div class="text-end">
-                                    <span class="text-warning fw-extrabold fs-5">{{ number_format($userReview->rating, 1) }}</span>
-                                    <span class="text-secondary small">/10</span>
-                                    <span class="text-warning small ms-1">({{ number_format($userReview->star_rating, 1) }} ★)</span>
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="text-secondary small mb-2" style="font-size: 0.78rem;">
-                            <span>Vista: <strong class="text-white">{{ $userReview->watched_date ? $userReview->watched_date->format('d/m/Y') : 'Sin fecha' }}</strong></span>
-                            @if($userReview->is_rewatch)
-                                <span class="badge bg-secondary ms-1 py-0 px-1" style="font-size: 0.68rem;">Rewatch</span>
-                            @endif
-                        </div>
-
-                        @if($userReview->review_text)
-                            <p class="text-light-emphasis small fst-italic mb-2" style="font-size: 0.82rem;">
-                                "{{ Str::limit($userReview->review_text, 140) }}"
-                            </p>
-                        @endif
-
-                        @if($userReview->private_notes)
-                            <div class="p-2 rounded-2 bg-dark text-light-emphasis small border border-secondary border-opacity-25" style="font-size: 0.75rem;">
-                                <span class="text-warning fw-semibold"><i class="bi bi-lock-fill me-1"></i>Privado:</span>
-                                {{ Str::limit($userReview->private_notes, 80) }}
-                            </div>
-                        @endif
-                    </div>
+                @if(!empty($omdbRatings['awards']))
+                    <p class="hero-awards">
+                        <i class="bi bi-trophy-fill"></i>{{ $omdbRatings['awards'] }}
+                    </p>
                 @endif
             </div>
         </div>
+
     </div>
 </div>
 
-<div class="container py-2 mb-5">
-    <div class="row g-5">
-        <!-- Main Details Column -->
+<!-- ==========================================================================
+     Reparto, equipo tecnico, temporadas, resenas + ficha tecnica lateral
+     ========================================================================== -->
+<div class="container mb-5">
+    <div class="row g-4 g-lg-5">
         <div class="col-lg-8">
-            <!-- Cast Members -->
-            @if(count($cast) > 0)
-                <div class="mb-5">
-                    <h4 class="fw-bold text-white mb-3">Reparto Principal</h4>
-                    <div class="row g-3">
-                        @foreach($cast as $actor)
+            <!-- Reparto Principal -->
+            @if(count($castPrimary) > 0)
+                <section class="info-section" aria-labelledby="cast-heading">
+                    <div class="section-header">
+                        <h2 class="section-title" id="cast-heading">Reparto Principal</h2>
+                        <span class="section-subtitle">
+                            {{ count($castAll) }} {{ count($castAll) === 1 ? 'intérprete acreditado' : 'intérpretes acreditados' }} en TMDB
+                        </span>
+                    </div>
+
+                    <div class="cast-grid">
+                        @foreach($castPrimary as $actor)
+                            @include('media.partials.cast-card', ['actor' => $actor, 'imageBase' => $imageBase])
+                        @endforeach
+                    </div>
+
+                    @if(count($castExtra) > 0)
+                        <div class="collapse" id="castExtra">
+                            <div class="cast-grid mt-2">
+                                @foreach($castExtra as $actor)
+                                    @include('media.partials.cast-card', ['actor' => $actor, 'imageBase' => $imageBase])
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-cine-secondary btn-pill-compact btn-cast-toggle collapsed mt-3"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#castExtra"
+                            aria-expanded="false"
+                            aria-controls="castExtra"
+                        >
+                            <span class="cast-toggle-more">
+                                <i class="bi bi-chevron-down me-1"></i>Ver reparto completo ({{ count($castExtra) }} más)
+                            </span>
+                            <span class="cast-toggle-less">
+                                <i class="bi bi-chevron-up me-1"></i>Mostrar solo el reparto principal
+                            </span>
+                        </button>
+                    @endif
+                </section>
+            @endif
+
+            <!-- Equipo Técnico -->
+            @if(count($crewGroups) > 0)
+                <section class="info-section" aria-labelledby="crew-heading">
+                    <div class="section-header">
+                        <h2 class="section-title" id="crew-heading">Equipo Técnico</h2>
+                        <span class="section-subtitle">Quiénes están detrás de cámara</span>
+                    </div>
+
+                    <div class="crew-grid">
+                        @foreach($crewGroups as $crewLabel => $crewNames)
+                            <div class="crew-item">
+                                <span class="crew-job">{{ $crewLabel }}</span>
+                                <span class="crew-names">{{ implode(' · ', $crewNames) }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            <!-- Temporadas (solo series) -->
+            @if($type === 'tv' && count($seasons) > 0)
+                <section class="info-section" aria-labelledby="seasons-heading">
+                    <div class="section-header">
+                        <h2 class="section-title" id="seasons-heading">Temporadas</h2>
+                        <span class="section-subtitle">
+                            {{ $media['number_of_seasons'] ?? count($seasons) }} {{ ($media['number_of_seasons'] ?? count($seasons)) === 1 ? 'temporada' : 'temporadas' }}
+                            @if(!empty($media['number_of_episodes']))
+                                · {{ $media['number_of_episodes'] }} episodios en total
+                            @endif
+                        </span>
+                    </div>
+
+                    @if(!empty($media['next_episode_to_air']))
+                        @php $nextEp = $media['next_episode_to_air']; @endphp
+                        <div class="next-episode">
+                            <i class="bi bi-broadcast text-accent-info"></i>
+                            <span>
+                                <strong>Próximo episodio:</strong>
+                                T{{ $nextEp['season_number'] ?? '?' }}E{{ $nextEp['episode_number'] ?? '?' }}
+                                @if(!empty($nextEp['name'])) · {{ $nextEp['name'] }} @endif
+                                @if(!empty($nextEp['air_date'])) · {{ date('d/m/Y', strtotime($nextEp['air_date'])) }} @endif
+                            </span>
+                        </div>
+                    @elseif(!empty($media['last_episode_to_air']))
+                        @php $lastEp = $media['last_episode_to_air']; @endphp
+                        <div class="next-episode">
+                            <i class="bi bi-broadcast-pin text-accent-info"></i>
+                            <span>
+                                <strong>Último episodio emitido:</strong>
+                                T{{ $lastEp['season_number'] ?? '?' }}E{{ $lastEp['episode_number'] ?? '?' }}
+                                @if(!empty($lastEp['name'])) · {{ $lastEp['name'] }} @endif
+                                @if(!empty($lastEp['air_date'])) · {{ date('d/m/Y', strtotime($lastEp['air_date'])) }} @endif
+                            </span>
+                        </div>
+                    @endif
+
+                    <div class="season-grid">
+                        @foreach($seasons as $season)
                             @php
-                                $actorImage = !empty($actor['profile_path'])
-                                    ? config('services.tmdb.image_base_url', 'https://image.tmdb.org/t/p') . '/w185' . $actor['profile_path']
+                                $seasonPoster = !empty($season['poster_path'])
+                                    ? $imageBase . '/w185' . $season['poster_path']
                                     : asset('images/no-poster.svg');
+                                $seasonYear = !empty($season['air_date']) ? substr($season['air_date'], 0, 4) : null;
                             @endphp
-                            <div class="col-6 col-sm-4 col-md-4">
-                                <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-dark border border-secondary">
-                                    <img src="{{ $actorImage }}" alt="{{ $actor['name'] }}" class="cast-avatar">
-                                    <div class="min-w-0">
-                                        <div class="fw-bold text-white small text-truncate">{{ $actor['name'] }}</div>
-                                        <div class="text-secondary small text-truncate">{{ $actor['character'] }}</div>
+                            <div class="season-item">
+                                <img src="{{ $seasonPoster }}" alt="{{ $season['name'] ?? 'Temporada' }}" class="season-poster" loading="lazy">
+                                <div class="season-item-body">
+                                    <div class="season-name">{{ $season['name'] ?? 'Temporada ' . ($season['season_number'] ?? '') }}</div>
+                                    <div class="season-meta">
+                                        {{ $season['episode_count'] }} {{ $season['episode_count'] === 1 ? 'episodio' : 'episodios' }}
+                                        @if($seasonYear) · {{ $seasonYear }} @endif
                                     </div>
+                                    @if(!empty($season['overview']))
+                                        <p class="season-overview">{{ Str::limit($season['overview'], 130) }}</p>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                </div>
+                </section>
             @endif
 
-            <!-- Community Reviews -->
-            <div>
-                <h4 class="fw-bold text-white mb-3">
-                    <i class="bi bi-chat-square-quote text-success me-2"></i>Reseñas de la Comunidad
-                </h4>
-                @forelse($communityReviews as $comReview)
-                    <div class="card bg-dark border-secondary p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-person-circle text-secondary fs-5"></i>
-                                <strong class="text-white">{{ $comReview->user->name }}</strong>
+            <!-- Reseñas de la Comunidad -->
+            <section class="info-section" aria-labelledby="community-heading">
+                <div class="section-header">
+                    <h2 class="section-title" id="community-heading">Reseñas de la Comunidad</h2>
+                    <span class="section-subtitle">Lo que escribieron otros usuarios de Dharma</span>
+                </div>
+
+                {{-- Tu resena va primero y destacada. Antes vivia dentro de la
+                     card de "Tu nota"; en la columna del hero no entra. --}}
+                @if($userReview && ($userReview->review_text || $userReview->private_notes))
+                    <article class="community-review community-review-mine">
+                        <div class="community-review-head">
+                            <div class="review-author">
+                                <span class="review-avatar"><i class="bi bi-person-fill"></i></span>
+                                <div class="review-author-body">
+                                    <span class="review-name">Tu rese&ntilde;a</span>
+                                    <span class="review-date">
+                                        {{ $userReview->watched_date ? 'Vista el ' . $userReview->watched_date->translatedFormat('d M Y') : 'Sin fecha' }}
+                                    </span>
+                                </div>
                             </div>
+
+                            <button
+                                type="button"
+                                class="btn btn-cine-secondary btn-pill-compact"
+                                hx-get="{{ route('reviews.edit', $userReview) }}"
+                                hx-target="#logModalContent"
+                                data-bs-toggle="modal"
+                                data-bs-target="#logModal"
+                            >
+                                <i class="bi bi-pencil-square me-1"></i>Editar
+                            </button>
+                        </div>
+
+                        @if($userReview->is_rewatch || $userReview->contains_spoilers)
+                            <div class="diary-meta mb-2">
+                                @if($userReview->is_rewatch)
+                                    <span class="diary-chip diary-chip-rewatch"><i class="bi bi-arrow-repeat"></i>Re-visionado</span>
+                                @endif
+                                @if($userReview->contains_spoilers)
+                                    <span class="diary-chip"><i class="bi bi-eye-slash"></i>Contiene spoilers</span>
+                                @endif
+                            </div>
+                        @endif
+
+                        @if($userReview->review_text)
+                            <p class="diary-review-text">{{ $userReview->review_text }}</p>
+                        @endif
+
+                        @if($userReview->private_notes)
+                            <div class="diary-private-note mt-2">
+                                <span class="diary-private-note-label">
+                                    <i class="bi bi-lock-fill"></i>Nota privada
+                                </span>
+                                {{ $userReview->private_notes }}
+                            </div>
+                        @endif
+                    </article>
+                @endif
+
+                @forelse($communityReviews as $comReview)
+                    <article class="community-review">
+                        <div class="community-review-head">
+                            <div class="review-author">
+                                <span class="review-avatar">{{ Str::substr($comReview->user->name ?? '?', 0, 1) }}</span>
+                                <div class="review-author-body">
+                                    <span class="review-name">{{ $comReview->user->name ?? 'Usuario' }}</span>
+                                    <span class="review-date">
+                                        {{ $comReview->watched_date ? 'Vista el ' . $comReview->watched_date->translatedFormat('d M Y') : $comReview->created_at->translatedFormat('d M Y') }}
+                                    </span>
+                                </div>
+                            </div>
+
                             @if($comReview->rating !== null)
-                                <div class="text-warning fw-bold small text-end">
-                                    <span>{{ number_format($comReview->rating, 1) }}/10</span>
-                                    <span class="text-secondary">({{ number_format($comReview->star_rating, 1) }} ★)</span>
+                                <div class="diary-rating">
+                                    <div class="diary-rating-value">
+                                        {{ number_format($comReview->rating, 1) }}<span class="diary-rating-max">/10</span>
+                                    </div>
+                                    <div class="diary-rating-stars">
+                                        {{ number_format($comReview->star_rating, 1) }} ★
+                                    </div>
                                 </div>
                             @endif
                         </div>
-                        @if($comReview->review_text)
-                            <p class="text-light-emphasis mb-0 small">{{ $comReview->review_text }}</p>
+
+                        @if($comReview->is_rewatch || $comReview->contains_spoilers)
+                            <div class="diary-meta mb-2">
+                                @if($comReview->is_rewatch)
+                                    <span class="diary-chip diary-chip-rewatch"><i class="bi bi-arrow-repeat"></i>Re-visionado</span>
+                                @endif
+                                @if($comReview->contains_spoilers)
+                                    <span class="diary-chip"><i class="bi bi-eye-slash"></i>Contiene spoilers</span>
+                                @endif
+                            </div>
                         @endif
-                    </div>
+
+                        @if($comReview->review_text)
+                            @include('partials.review-text', ['review' => $comReview])
+                        @endif
+                    </article>
                 @empty
-                    <p class="text-secondary small">Sé el primero en registrar una reseña para esta película.</p>
+                    <div class="empty-state">
+                        <i class="bi bi-chat-square-quote empty-state-icon"></i>
+                        <h3 class="empty-state-title">Todavía nadie escribió sobre este título</h3>
+                        <p class="empty-state-text">
+                            Si ya lo viste, tu reseña puede ser la primera. También podés dejar notas privadas que solo vos vas a leer.
+                        </p>
+                        <button
+                            type="button"
+                            class="btn btn-cine-primary"
+                            hx-get="{{ route('reviews.modal', ['type' => $type, 'id' => $media['id']]) }}"
+                            hx-target="#logModalContent"
+                            data-bs-toggle="modal"
+                            data-bs-target="#logModal"
+                        >
+                            <i class="bi bi-pencil-square me-1"></i>Escribir la primera reseña
+                        </button>
+                    </div>
                 @endforelse
-            </div>
+            </section>
         </div>
 
-        <!-- Sidebar Info -->
+        <!-- Ficha Técnica -->
         <div class="col-lg-4">
-            <!-- Ficha Técnica -->
-            <div class="card bg-dark border-secondary p-4 rounded-4 sticky-sidebar sticky-top">
-                <h5 class="fw-bold text-white mb-3 border-bottom border-secondary pb-2">Ficha Técnica</h5>
+            <aside class="spec-panel sticky-sidebar sticky-top">
+                <h2 class="spec-panel-title">
+                    <i class="bi bi-clipboard-data text-accent"></i>Ficha Técnica
+                </h2>
 
-                <ul class="list-unstyled mb-0 d-flex flex-column gap-3 small">
-                    @if($director)
-                        <li class="d-flex justify-content-between">
-                            <span class="text-secondary">Director:</span>
-                            <span class="text-white fw-semibold">{{ $director }}</span>
-                        </li>
+                <dl class="spec-list">
+                    <div class="spec-row">
+                        <dt class="spec-key">Tipo</dt>
+                        <dd class="spec-value">{{ $type === 'tv' ? 'Serie de TV' : 'Película' }}</dd>
+                    </div>
+
+                    @if($originalTitle)
+                        <div class="spec-row">
+                            <dt class="spec-key">Título original</dt>
+                            <dd class="spec-value">{{ $originalTitle }}</dd>
+                        </div>
+                    @endif
+
+                    @if($status)
+                        <div class="spec-row">
+                            <dt class="spec-key">Estado</dt>
+                            <dd class="spec-value">{{ $status }}</dd>
+                        </div>
                     @endif
 
                     @if($date)
-                        <li class="d-flex justify-content-between">
-                            <span class="text-secondary">Fecha de Estreno:</span>
-                            <span class="text-white">{{ date('d/m/Y', strtotime($date)) }}</span>
-                        </li>
+                        <div class="spec-row">
+                            <dt class="spec-key">{{ $type === 'tv' ? 'Primera emisión' : 'Estreno' }}</dt>
+                            <dd class="spec-value">{{ date('d/m/Y', strtotime($date)) }}</dd>
+                        </div>
                     @endif
 
-                    @if(!empty($media['status']))
-                        <li class="d-flex justify-content-between">
-                            <span class="text-secondary">Estado TMDB:</span>
-                            <span class="text-white">{{ $media['status'] }}</span>
-                        </li>
+                    @if($type === 'tv' && !empty($media['last_air_date']))
+                        <div class="spec-row">
+                            <dt class="spec-key">Última emisión</dt>
+                            <dd class="spec-value">{{ date('d/m/Y', strtotime($media['last_air_date'])) }}</dd>
+                        </div>
+                    @endif
+
+                    @if($type === 'tv' && !empty($media['number_of_seasons']))
+                        <div class="spec-row">
+                            <dt class="spec-key">Temporadas</dt>
+                            <dd class="spec-value spec-value-num">{{ $media['number_of_seasons'] }}</dd>
+                        </div>
+                    @endif
+
+                    @if($type === 'tv' && !empty($media['number_of_episodes']))
+                        <div class="spec-row">
+                            <dt class="spec-key">Episodios</dt>
+                            <dd class="spec-value spec-value-num">{{ $media['number_of_episodes'] }}</dd>
+                        </div>
+                    @endif
+
+                    @if($type === 'tv' && $episodeRuntime)
+                        <div class="spec-row">
+                            <dt class="spec-key">Duración por episodio</dt>
+                            <dd class="spec-value">≈ {{ $formatRuntime($episodeRuntime) }}</dd>
+                        </div>
+                    @elseif(!empty($media['runtime']))
+                        <div class="spec-row">
+                            <dt class="spec-key">Duración</dt>
+                            <dd class="spec-value">{{ $formatRuntime($media['runtime']) }}</dd>
+                        </div>
+                    @endif
+
+                    @if(count($networks) > 0)
+                        <div class="spec-row">
+                            <dt class="spec-key">{{ count($networks) === 1 ? 'Cadena' : 'Cadenas' }}</dt>
+                            <dd class="spec-value">{{ implode(' · ', $networks) }}</dd>
+                        </div>
+                    @endif
+
+                    @if(!empty($omdbRatings['rated']))
+                        <div class="spec-row">
+                            <dt class="spec-key">Clasificación</dt>
+                            <dd class="spec-value">
+                                <span class="diary-chip" title="Clasificación por edad (MPAA / TV)">{{ $omdbRatings['rated'] }}</span>
+                            </dd>
+                        </div>
                     @endif
 
                     @if(!empty($media['original_language']))
-                        <li class="d-flex justify-content-between">
-                            <span class="text-secondary">Idioma Original:</span>
-                            <span class="text-white text-uppercase">{{ $media['original_language'] }}</span>
-                        </li>
+                        <div class="spec-row">
+                            <dt class="spec-key">Idioma original</dt>
+                            <dd class="spec-value text-uppercase">{{ $media['original_language'] }}</dd>
+                        </div>
+                    @endif
+
+                    @if(count($languages) > 0)
+                        <div class="spec-row">
+                            <dt class="spec-key">Idiomas</dt>
+                            <dd class="spec-value">{{ implode(' · ', array_slice($languages, 0, 4)) }}</dd>
+                        </div>
+                    @endif
+
+                    @if(count($countries) > 0)
+                        <div class="spec-row">
+                            <dt class="spec-key">{{ count($countries) === 1 ? 'País' : 'Países' }}</dt>
+                            <dd class="spec-value">{{ implode(' · ', array_slice($countries, 0, 4)) }}</dd>
+                        </div>
                     @endif
 
                     @if(!empty($media['budget']) && $media['budget'] > 0)
-                        <li class="d-flex justify-content-between">
-                            <span class="text-secondary">Presupuesto:</span>
-                            <span class="text-white">${{ number_format($media['budget']) }}</span>
-                        </li>
+                        <div class="spec-row">
+                            <dt class="spec-key">Presupuesto</dt>
+                            <dd class="spec-value spec-value-num">${{ number_format($media['budget'], 0, ',', '.') }}</dd>
+                        </div>
                     @endif
 
                     @if(!empty($media['revenue']) && $media['revenue'] > 0)
-                        <li class="d-flex justify-content-between">
-                            <span class="text-secondary">Recaudación:</span>
-                            <span class="text-white">${{ number_format($media['revenue']) }}</span>
-                        </li>
+                        <div class="spec-row">
+                            <dt class="spec-key">Recaudación</dt>
+                            <dd class="spec-value spec-value-num">${{ number_format($media['revenue'], 0, ',', '.') }}</dd>
+                        </div>
                     @endif
-                </ul>
-            </div>
+                </dl>
+
+                @if(count($companies) > 0)
+                    <div class="spec-block">
+                        <span class="spec-block-label">{{ count($companies) === 1 ? 'Productora' : 'Productoras' }}</span>
+                        <div class="diary-meta">
+                            @foreach($companies as $company)
+                                <span class="diary-chip">{{ $company }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if($imdbId || !empty($media['homepage']))
+                    <div class="spec-block">
+                        <span class="spec-block-label">Enlaces</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if($imdbId)
+                                <a href="https://www.imdb.com/title/{{ $imdbId }}/" target="_blank" rel="noopener noreferrer" class="diary-chip">
+                                    <span class="badge-imdb-logo">IMDb</span> Ficha en IMDb
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            @endif
+                            @if(!empty($media['homepage']))
+                                <a href="{{ $media['homepage'] }}" target="_blank" rel="noopener noreferrer" class="diary-chip">
+                                    <i class="bi bi-globe2"></i> Sitio oficial
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </aside>
         </div>
     </div>
 </div>
+
+<!-- ==========================================================================
+     Titulos relacionados: la ficha dejaba de ser un callejon sin salida
+     ========================================================================== -->
+@if(count($related) > 0)
+    <div class="container mb-5">
+        <div class="media-slider-container">
+            <div class="media-slider-header">
+                <h2 class="section-title">Títulos relacionados</h2>
+                <span class="section-subtitle">Si te gustó {{ $title }}, quizás te interese</span>
+            </div>
+            <div class="media-slider-wrapper position-relative">
+                <button type="button" class="slider-nav-arrow slider-nav-prev" aria-label="Anterior" title="Anterior">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <div class="media-slider-track">
+                    @foreach($related as $relatedItem)
+                        @include('media.partials.movie-card', [
+                            'item' => $relatedItem,
+                            'type' => $relatedItem['media_type'],
+                            'colClass' => 'media-slider-col',
+                            'inWatchlist' => $relatedItem['in_watchlist'] ?? false,
+                        ])
+                    @endforeach
+                </div>
+
+                <button type="button" class="slider-nav-arrow slider-nav-next" aria-label="Siguiente" title="Siguiente">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+@endif
 
 <!-- Trailer Modal (if available) -->
 @if($trailer)
     <div class="modal fade" id="trailerModal" tabindex="-1" aria-labelledby="trailerModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl">
-            <div class="modal-content bg-black border-0">
-                <div class="modal-header border-0 pb-0">
-                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+            {{-- Sin modal-header propio: el video ocupa todo y el boton de
+                 cerrar flota encima, como en el modal de calificacion. --}}
+            <div class="modal-content trailer-modal-content position-relative">
+                <button type="button" class="modal-close-dharma" data-bs-dismiss="modal" aria-label="Cerrar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
                 <div class="modal-body p-0 ratio ratio-16x9">
                     <iframe src="https://www.youtube.com/embed/{{ $trailer }}?enablejsapi=1" title="Trailer de {{ $title }}" allowfullscreen></iframe>
                 </div>

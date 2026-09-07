@@ -32,7 +32,7 @@
                         <i class="bi bi-person auth-field-icon"></i>
                     </div>
                     @error('name')
-                        <div class="text-danger small mt-1 ps-2">
+                        <div class="auth-error">
                             <i class="bi bi-exclamation-circle me-1"></i>{{ $message }}
                         </div>
                     @enderror
@@ -54,7 +54,7 @@
                         <i class="bi bi-envelope auth-field-icon"></i>
                     </div>
                     @error('email')
-                        <div class="text-danger small mt-1 ps-2">
+                        <div class="auth-error">
                             <i class="bi bi-exclamation-circle me-1"></i>{{ $message }}
                         </div>
                     @enderror
@@ -78,7 +78,7 @@
                         </button>
                     </div>
                     @error('password')
-                        <div class="text-danger small mt-1 ps-2">
+                        <div class="auth-error">
                             <i class="bi bi-exclamation-circle me-1"></i>{{ $message }}
                         </div>
                     @enderror

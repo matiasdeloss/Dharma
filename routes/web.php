@@ -35,6 +35,15 @@ Route::get('/reviews/modal/{type}/{id}', [ReviewController::class, 'createModal'
     ->whereNumber('id')
     ->name('reviews.modal');
 Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+// Editar una entrada concreta del diario. Fuera de `auth` como el resto de las
+// acciones del modal: con la sesión vencida devuelven el modal de "iniciá
+// sesión" en vez de un redirect que htmx metería adentro del propio modal.
+Route::get('/reviews/{review}/edit', [ReviewController::class, 'editModal'])
+    ->whereNumber('review')
+    ->name('reviews.edit');
+Route::patch('/reviews/{review}', [ReviewController::class, 'update'])
+    ->whereNumber('review')
+    ->name('reviews.update');
 
 // =========================================================================
 // Authenticated User Routes (Diary, Full Watchlist & Logout)
@@ -44,4 +53,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/diary', [ReviewController::class, 'index'])->name('reviews.index');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::get('/watchlist', [WatchlistController::class, 'index'])->name('watchlist.index');
+    Route::patch('/watchlist/{watchlist}', [WatchlistController::class, 'update'])->name('watchlist.update');
 });

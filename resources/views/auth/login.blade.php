@@ -32,7 +32,7 @@
                         <i class="bi bi-envelope auth-field-icon"></i>
                     </div>
                     @error('email')
-                        <div class="text-danger small mt-1 ps-2">
+                        <div class="auth-error">
                             <i class="bi bi-exclamation-circle me-1"></i>{{ $message }}
                         </div>
                     @enderror
@@ -56,7 +56,7 @@
                         </button>
                     </div>
                     @error('password')
-                        <div class="text-danger small mt-1 ps-2">
+                        <div class="auth-error">
                             <i class="bi bi-exclamation-circle me-1"></i>{{ $message }}
                         </div>
                     @enderror
@@ -65,7 +65,7 @@
                 <!-- Remember Me -->
                 <div class="d-flex justify-content-between align-items-center mb-4 ps-1">
                     <div class="form-check">
-                        <input class="form-check-input bg-dark border-secondary" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                        <input class="form-check-input auth-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
                         <label class="form-check-label auth-check-label" for="remember">
                             Recordarme en este equipo
                         </label>

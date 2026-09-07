@@ -3,37 +3,21 @@
 @section('title', 'Guarda tus reseñas y notas de películas')
 
 @section('content')
-<div class="container">
-    @if(!$isConfigured)
-        <!-- Friendly TMDB configuration tip banner -->
-        <div class="alert alert-dark border-warning text-light-emphasis d-flex align-items-center justify-content-between mb-5 p-3 rounded-3" role="alert">
-            <div class="d-flex align-items-center gap-3">
-                <i class="bi bi-info-circle-fill text-warning fs-3"></i>
-                <div>
-                    <strong class="text-white">Modo Demo / Clave TMDB no configurada:</strong>
-                    <div class="small text-secondary">
-                        Para buscar cualquier película o serie en tiempo real con millones de títulos, agrega tu <code>TMDB_API_KEY</code> o <code>TMDB_READ_TOKEN</code> en el archivo <code>.env</code>.
-                        ¡Mientras tanto puedes explorar los datos de prueba incluidos!
-                    </div>
-                </div>
-            </div>
-            <a href="https://www.themoviedb.org/settings/api" target="_blank" class="btn btn-outline-warning btn-sm text-nowrap">
-                Obtener API Key <i class="bi bi-box-arrow-up-right ms-1"></i>
-            </a>
+{{-- Hero a sangre completa: el fotograma ocupa todo el ancho de la ventana y se
+     funde con el fondo de la pagina abajo, en vez de vivir dentro de una card. --}}
+<div class="hero-home-banner" @if(!empty($heroBackdrop['url'])) style="--hero-backdrop: url('{{ $heroBackdrop['url'] }}');" @endif>
+    @if(!empty($heroBackdrop['title']))
+        <div class="hero-backdrop-credit">
+            <i class="bi bi-camera-reels text-accent"></i>
+            <span>{{ $heroBackdrop['title'] }}</span>
         </div>
     @endif
 
-    <!-- Hero Banner -->
-    <div class="hero-home-banner mb-5" @if(!empty($heroBackdrop['url'])) style="--hero-backdrop: url('{{ $heroBackdrop['url'] }}');" @endif>
-        @if(!empty($heroBackdrop['title']))
-            <div class="hero-backdrop-credit">
-                <i class="bi bi-camera-reels text-accent"></i>
-                <span>{{ $heroBackdrop['title'] }}</span>
-            </div>
-        @endif
-
+    <div class="container">
         <div class="row align-items-center position-relative z-2">
-            <div class="{{ Auth::check() ? 'col-lg-7' : 'col-lg-10 col-xl-9' }}">
+            {{-- Columna unica: los contadores bajaron aca abajo, asi que el lado
+                 derecho queda libre y se ve el fotograma. --}}
+            <div class="col-lg-7 col-xl-6">
                 <h1 class="hero-title display-5 fw-extrabold text-white mb-2">
                     Lleva el registro de cada película y serie que ves.
                 </h1>
@@ -60,33 +44,55 @@
                         </a>
                     @endauth
                 </div>
-            </div>
 
-            @auth
-            <div class="col-lg-5 d-none d-lg-flex align-items-center justify-content-center ps-lg-4">
-                <div class="hero-stats-row">
-                    <div class="hero-stat">
-                        <i class="hero-stat-icon bi bi-journal-text text-cream"></i>
-                        <div id="hero-stat-notes" class="hero-stat-number text-cream">{{ $stats['total_notes'] ?? 0 }}</div>
-                        <div class="hero-stat-label">Notas</div>
+                @auth
+                    {{-- Los ids y las clases de estos 3 numeros son el contrato con
+                         partials/hero-stats-oob.blade.php, que los reemplaza en vivo
+                         por HTMX. Si cambia una clase aca, cambia alla tambien. --}}
+                    <div class="hero-stats-row">
+                        <div class="hero-stat">
+                            <i class="hero-stat-icon bi bi-journal-text text-cream"></i>
+                            <div id="hero-stat-notes" class="hero-stat-number text-cream">{{ $stats['total_notes'] ?? 0 }}</div>
+                            <div class="hero-stat-label">Notas</div>
+                        </div>
+                        <div class="hero-stat-divider"></div>
+                        <div class="hero-stat">
+                            <i class="hero-stat-icon bi bi-chat-square-quote text-purple"></i>
+                            <div id="hero-stat-reviews" class="hero-stat-number text-purple">{{ $stats['total_reviews'] ?? 0 }}</div>
+                            <div class="hero-stat-label">Reseñas</div>
+                        </div>
+                        <div class="hero-stat-divider"></div>
+                        <div class="hero-stat">
+                            <i class="hero-stat-icon bi bi-bookmark-heart text-accent-info"></i>
+                            <div id="hero-stat-watchlist" class="hero-stat-number text-accent-info">{{ $stats['total_watchlist'] ?? 0 }}</div>
+                            <div class="hero-stat-label">Watchlist</div>
+                        </div>
                     </div>
-                    <div class="hero-stat-divider"></div>
-                    <div class="hero-stat">
-                        <i class="hero-stat-icon bi bi-chat-square-quote text-purple"></i>
-                        <div id="hero-stat-reviews" class="hero-stat-number text-purple">{{ $stats['total_reviews'] ?? 0 }}</div>
-                        <div class="hero-stat-label">Reseñas</div>
-                    </div>
-                    <div class="hero-stat-divider"></div>
-                    <div class="hero-stat">
-                        <i class="hero-stat-icon bi bi-bookmark-heart text-info"></i>
-                        <div id="hero-stat-watchlist" class="hero-stat-number text-info">{{ $stats['total_watchlist'] ?? 0 }}</div>
-                        <div class="hero-stat-label">Watchlist</div>
+                @endauth
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pt-4 pt-lg-5">
+    @if(!$isConfigured)
+        <!-- Friendly TMDB configuration tip banner -->
+        <div class="alert alert-dark border-warning text-light-emphasis d-flex align-items-center justify-content-between mb-5 p-3 rounded-3" role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-info-circle-fill text-warning fs-3"></i>
+                <div>
+                    <strong class="text-white">Modo Demo / Clave TMDB no configurada:</strong>
+                    <div class="small text-secondary">
+                        Para buscar cualquier película o serie en tiempo real con millones de títulos, agrega tu <code>TMDB_API_KEY</code> o <code>TMDB_READ_TOKEN</code> en el archivo <code>.env</code>.
+                        ¡Mientras tanto puedes explorar los datos de prueba incluidos!
                     </div>
                 </div>
             </div>
-            @endauth
+            <a href="https://www.themoviedb.org/settings/api" target="_blank" class="btn btn-outline-warning btn-sm text-nowrap">
+                Obtener API Key <i class="bi bi-box-arrow-up-right ms-1"></i>
+            </a>
         </div>
-    </div>
+    @endif
 
     <!-- 1. Selecciones Populares -->
     <div class="media-slider-container mb-5">
@@ -205,32 +211,34 @@
                                             <div class="text-secondary small mb-2">
                                                 <span>Por <strong class="text-light-emphasis">{{ $review->user->name }}</strong></span>
                                                 @if($review->watched_date)
-                                                    <span>&bull; Vista el {{ $review->watched_date->format('d/m/Y') }}</span>
+                                                    <span>&bull; Vista el {{ $review->watched_date->translatedFormat('d M Y') }}</span>
                                                 @endif
                                                 @if($review->is_rewatch)
-                                                    <span class="badge bg-secondary-subtle text-secondary ms-1">Re-visionado</span>
+                                                    <span class="diary-chip diary-chip-rewatch ms-1">
+                                                        <i class="bi bi-arrow-repeat"></i>Re-visionado
+                                                    </span>
                                                 @endif
                                             </div>
                                         </div>
                                         @if($review->rating !== null)
-                                            <div class="text-warning fw-bold text-end">
-                                                <span>{{ number_format($review->rating, 1) }}<span class="fs-6 text-secondary">/10</span></span>
-                                                <div class="small text-secondary fw-normal">
-                                                    <span class="text-warning">{{ number_format($review->star_rating, 1) }} ★</span>
+                                            <div class="diary-rating flex-shrink-0">
+                                                <div class="diary-rating-value">
+                                                    {{ number_format($review->rating, 1) }}<span class="diary-rating-max">/10</span>
+                                                </div>
+                                                <div class="diary-rating-stars">
+                                                    {{ number_format($review->star_rating, 1) }} ★
                                                 </div>
                                             </div>
                                         @endif
                                     </div>
 
                                     @if($review->review_text)
-                                        <p class="text-light-emphasis small mb-2">{{ Str::limit($review->review_text, 140) }}</p>
+                                        @include('partials.review-text', ['review' => $review, 'limit' => 140])
                                     @endif
 
-                                    @if($review->private_notes)
-                                        <div class="p-2 rounded bg-dark-subtle border border-secondary-subtle small text-secondary">
-                                            <i class="bi bi-lock-fill text-warning me-1"></i><strong>Nota personal:</strong> {{ Str::limit($review->private_notes, 100) }}
-                                        </div>
-                                    @endif
+                                    {{-- Las notas privadas NO van aca: este feed es publico y muestra
+                                         reseñas de todos los usuarios. Solo se ven en el diario propio
+                                         (reviews/index) y en la ficha, sobre la reseña del usuario logueado. --}}
                                 </div>
                             </div>
                         </div>

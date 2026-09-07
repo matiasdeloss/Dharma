@@ -7,6 +7,33 @@
     border-bottom: 1px solid var(--dharma-border);
     backdrop-filter: blur(10px);
     z-index: 1030;
+    transition: background-color $transition-normal, border-color $transition-normal;
+}
+
+// --------------------------------------------------------------------------
+// Modo transparente sobre el hero del home
+// --------------------------------------------------------------------------
+// Solo de lg en adelante: abajo de ese breakpoint el menu colapsado se
+// despliega dentro del navbar y una barra transparente encima del fotograma
+// deja los links ilegibles.
+@media (min-width: 992px) {
+    .navbar-cine.navbar-over-hero:not(.navbar-scrolled) {
+        background-color: transparent !important;
+        border-bottom-color: transparent;
+        backdrop-filter: none;
+
+        // Los controles si conservan superficie propia: sobre un fotograma
+        // variable, un input sin fondo es ilegible la mitad de las veces.
+        .navbar-search-wrapper .input-group {
+            background-color: rgba(11, 14, 17, 0.55);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .nav-user-btn {
+            background-color: rgba(11, 14, 17, 0.55) !important;
+            border-color: rgba(255, 255, 255, 0.18) !important;
+        }
+    }
 }
 
 .navbar-brand {

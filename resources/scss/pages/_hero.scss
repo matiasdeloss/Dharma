@@ -2,14 +2,19 @@
 // Hero Banners & Movie Backdrop Header Components
 // ==========================================================================
 
+// Hero a sangre completa (full-bleed): vive fuera del `.container`, ocupa todo
+// el ancho de la ventana y se funde con el fondo de la pagina en el borde
+// inferior. La card con borde y radio quedo atras a proposito — el fotograma es
+// el fondo de la seccion, no una imagen dentro de un recuadro.
 .hero-home-banner {
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    border-radius: $radius-lg;
-    background-color: #14181f;
-    border: 1px solid var(--dharma-border);
-    padding: 2.5rem 2rem;
+    background-color: var(--dharma-bg);
+    padding: 3rem 0 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 
     // Fotograma de fondo (backdrop de un título en tendencia), atenuado.
     &::before {
@@ -19,33 +24,75 @@
         z-index: -2;
         background-image: var(--hero-backdrop, none);
         background-size: cover;
-        background-position: center 22%;
-        filter: saturate(0.8) brightness(0.6);
-        transform: scale(1.04); // evita bordes claros al filtrar
+        background-position: center 25%;
+        filter: saturate(0.85) brightness(0.62);
+        // El scale base evita bordes claros al filtrar; la animacion lo lleva
+        // muy despacio un poco mas adentro (Ken Burns) para que la portada
+        // respire en vez de quedar como una foto pegada.
+        transform: scale(1.06);
+        animation: hero-kenburns 34s ease-in-out infinite alternate;
     }
 
-    // Viñeta + degradé para que el texto de la izquierda siga siendo legible
-    // sobre cualquier fotograma, tipo "sala de cine" en vez de fondo plano.
     &::after {
         content: '';
         position: absolute;
         inset: 0;
         z-index: -1;
         background:
-            linear-gradient(100deg, rgba(15, 18, 22, 0.97) 0%, rgba(15, 18, 22, 0.88) 38%, rgba(15, 18, 22, 0.5) 72%, rgba(15, 18, 22, 0.28) 100%),
-            radial-gradient(ellipse at 50% 130%, rgba(0, 0, 0, 0.55), transparent 60%);
+            // 1. Fundido inferior hacia el fondo REAL de la pagina. Va primero
+            //    (queda arriba de todo) para garantizar que el borde inferior
+            //    llegue exactamente a --dharma-bg: sin esto se ve la costura
+            //    donde termina el hero y arranca el carrusel.
+            linear-gradient(to bottom, transparent 42%, rgba(34, 40, 49, 0.72) 80%, var(--dharma-bg) 100%),
+            // 2. Scrim superior: el navbar es transparente arriba de todo, asi
+            //    que los links necesitan que la imagen este oscurecida detras.
+            linear-gradient(to bottom, rgba(12, 15, 19, 0.78) 0%, rgba(12, 15, 19, 0.32) 12%, transparent 26%),
+            // 3. Columna izquierda oscura para que el texto se lea sobre
+            //    cualquier fotograma, abriendose hacia la derecha para que la
+            //    imagen respire (antes arrancaba en 0.97 y la tapaba entera).
+            linear-gradient(100deg, rgba(20, 24, 31, 0.94) 0%, rgba(20, 24, 31, 0.8) 34%, rgba(20, 24, 31, 0.38) 66%, rgba(20, 24, 31, 0.1) 100%),
+            // 4. Viñeta suave, efecto "sala de cine".
+            radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.5), transparent 62%);
     }
 
     @media (min-width: 768px) {
-        padding: 3.5rem 3rem;
+        padding: 4.5rem 0 6rem;
+    }
+
+    // De lg en adelante el hero se mete por debajo del navbar sticky, para que
+    // el fotograma arranque en el borde superior de la ventana en vez de
+    // debajo de una barra solida. `--navbar-h` la publica modules/navbar.js;
+    // el fallback cubre el instante antes de que corra el JS.
+    @media (min-width: 992px) {
+        margin-top: calc(-1 * var(--navbar-h, 68px));
+        padding-top: calc(var(--navbar-h, 68px) + 4rem);
+        padding-bottom: 7rem;
+        min-height: min(84vh, 780px);
+    }
+}
+
+@keyframes hero-kenburns {
+    from {
+        transform: scale(1.06) translate3d(0, 0, 0);
+    }
+    to {
+        transform: scale(1.14) translate3d(0, -1.5%, 0);
+    }
+}
+
+// El movimiento del fondo es decorativo: si el sistema pide menos animacion,
+// se apaga entero y queda la imagen fija.
+@media (prefers-reduced-motion: reduce) {
+    .hero-home-banner::before {
+        animation: none;
     }
 }
 
 // Crédito discreto de la foto de fondo (mismo patrón que /login)
 .hero-backdrop-credit {
     position: absolute;
-    bottom: 1rem;
-    right: 1.25rem;
+    bottom: 1.5rem;
+    right: 1.5rem;
     z-index: 3;
     display: inline-flex;
     align-items: center;
@@ -93,43 +140,58 @@
 // --------------------------------------------------------------------------
 // Estadísticas del usuario (Notas / Reseñas / Watchlist)
 // --------------------------------------------------------------------------
+// Los contadores viven en la columna izquierda, debajo de los botones, dentro
+// de la zona que el degrade ya oscurece. Por eso NO llevan superficie propia:
+// la caja de vidrio que tenian antes los hacia leer como un widget pegado
+// encima de la foto en vez de como parte del hero. La linea superior es lo
+// unico que los separa del bloque de acciones.
 .hero-stats-row {
     display: flex;
-    align-items: center;
-    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 1.25rem;
+    margin-top: 2rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+    @media (min-width: 768px) {
+        gap: 1.75rem;
+    }
 }
 
 .hero-stat {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
+    align-items: flex-start;
+    gap: 0.2rem;
 }
 
 .hero-stat-icon {
-    font-size: 1.05rem;
-    opacity: 0.8;
-    margin-bottom: 0.15rem;
+    font-size: 0.9rem;
+    opacity: 0.75;
+    margin-bottom: 0.35rem;
 }
 
 .hero-stat-number {
-    font-family: $font-family-headings;
-    font-size: 2.9rem;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.02em;
+    @include numeral(2rem);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+
+    @media (min-width: 768px) {
+        font-size: 2.6rem;
+    }
 }
 
 .hero-stat-label {
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.68rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: var(--dharma-text-main);
+    letter-spacing: 0.12em;
+    color: var(--dharma-text-secondary);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
 .hero-stat-divider {
     align-self: stretch;
     width: 1px;
-    background-color: var(--dharma-surface-hover);
+    background-color: rgba(255, 255, 255, 0.14);
 }

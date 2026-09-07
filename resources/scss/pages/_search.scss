@@ -1,0 +1,115 @@
+// ==========================================================================
+// Busqueda
+// ==========================================================================
+// Es una pantalla de utilidad, no una pantalla de marca: aca lo que importa es
+// llegar rapido a los resultados. Por eso NO usa la banda con fotograma del
+// diario y la watchlist — un hero cinematografico arriba solo empujaria la
+// grilla fuera de la pantalla.
+
+.search-header {
+    margin-bottom: 2rem;
+}
+
+.search-eyebrow {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--dharma-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.search-title {
+    font-family: $font-family-headings;
+    font-size: clamp(1.6rem, 3vw, 2.15rem);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--dharma-text-main);
+    margin-bottom: 0;
+
+    // El termino buscado va en el acento del proyecto. Antes iba en
+    // `.text-success`, el verde de Bootstrap, que no es de esta paleta.
+    .search-term {
+        color: var(--dharma-accent);
+    }
+}
+
+// --------------------------------------------------------------------------
+// Campo de busqueda
+// --------------------------------------------------------------------------
+.search-field-form {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+
+    @media (max-width: 575.98px) {
+        flex-direction: column;
+    }
+}
+
+.search-field-wrapper {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+
+    // `:focus-within` en el contenedor en vez de `:focus +` sobre el input:
+    // asi el icono puede ir antes del campo en el DOM, que es el orden natural.
+    &:focus-within .search-field-icon {
+        color: var(--dharma-accent);
+    }
+}
+
+.search-field-icon {
+    position: absolute;
+    top: 50%;
+    left: 1.1rem;
+    transform: translateY(-50%);
+    color: var(--dharma-text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: color $transition-fast;
+}
+
+// Hereda la superficie y el foco dorado del resto de los controles del
+// proyecto (ver `.modal-form-control`), en tamano grande.
+.search-field {
+    @extend .modal-form-control;
+
+    width: 100%;
+    font-size: 1rem;
+    padding: 0.9rem 1rem 0.9rem 2.9rem;
+    border-radius: $radius-pill;
+}
+
+.search-submit {
+    flex: 0 0 auto;
+    border-radius: $radius-pill;
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+}
+
+// --------------------------------------------------------------------------
+// Meta de resultados
+// --------------------------------------------------------------------------
+.search-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--dharma-text-secondary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--dharma-border);
+
+    strong {
+        color: var(--dharma-text-main);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+.search-meta-sep {
+    opacity: 0.4;
+}

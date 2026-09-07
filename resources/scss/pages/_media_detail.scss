@@ -81,33 +81,6 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
     line-height: 1.2;
 }
 
-.media-sidebar-panel {
-    background-color: var(--dharma-surface);
-    border: 1px solid var(--dharma-border);
-    border-radius: 12px;
-    padding: 1.25rem;
-
-    .rating-item-flat {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.55rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-        text-decoration: none;
-        color: #f8fafc;
-        font-size: 0.86rem;
-        transition: opacity $transition-fast, color $transition-fast;
-
-        &:last-child {
-            border-bottom: none;
-        }
-
-        &.rating-imdb-link:hover {
-            color: #f5c518;
-        }
-    }
-}
-
 // --------------------------------------------------------------------------
 // 6. Plataformas de Streaming ("Disponible en:")
 // --------------------------------------------------------------------------
@@ -139,45 +112,6 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
 // --------------------------------------------------------------------------
 // 7. Badges de Calificaciones (TMDB, IMDb, Rotten, Metacritic, Dharma)
 // --------------------------------------------------------------------------
-.badge-rating {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.35em 0.7em;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    border: 1px solid var(--dharma-border);
-    background-color: rgba(34, 40, 49, 0.85);
-    color: #f8fafc;
-    transition: transform $transition-fast, border-color $transition-fast;
-    cursor: default;
-
-    strong {
-        font-weight: 700;
-        color: #ffffff;
-    }
-
-    small {
-        font-size: 0.75em;
-        opacity: 0.7;
-    }
-
-    &.badge-imdb {
-        cursor: pointer;
-
-        &:hover {
-            border-color: #f5c518;
-            background-color: rgba(245, 197, 24, 0.12);
-        }
-    }
-
-    &.badge-dharma {
-        border-color: rgba(212, 175, 55, 0.45);
-        background-color: rgba(212, 175, 55, 0.08);
-    }
-}
-
 .badge-imdb-logo {
     background-color: #f5c518;
     color: #000000;
@@ -217,4 +151,543 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
 
 .sticky-sidebar {
     top: 80px;
+}
+
+// ==========================================================================
+// 9. Seccion de informacion (todo lo que va DEBAJO del hero)
+// ==========================================================================
+// Material de toda la seccion: superficie opaca + 1px de borde, igual que
+// .diary-entry del diario. Nada de vidrio esmerilado aca — el vidrio existe
+// para leer texto sobre un fotograma variable (.hero-stats-row, .stat-tile);
+// abajo del hero el fondo ya es plano (--dharma-bg), asi que el blur no
+// resolveria ningun problema de contraste y solo agregaria ruido.
+@mixin detail-panel {
+    background-color: var(--dharma-elevated);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-lg;
+}
+
+.info-section {
+    margin-bottom: 2.75rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// --------------------------------------------------------------------------
+// 9.1 Notas, en la columna derecha del hero
+// --------------------------------------------------------------------------
+// SIN cards, a proposito. Apiladas en una columna angosta las cajas se leian
+// como una pila de recuadros compitiendo entre si. Filetes finos: es como se
+// lee una ficha tecnica, y deja que manden las cifras.
+.hero-scores {
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 991.98px) {
+        margin-top: 2rem;
+    }
+}
+
+.hero-score {
+    padding-bottom: 1.1rem;
+    margin-bottom: 1.1rem;
+    border-bottom: 1px solid var(--dharma-border);
+}
+
+.hero-score-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--dharma-text-secondary);
+    margin-bottom: 0.5rem;
+
+    i {
+        font-size: 0.85rem;
+    }
+}
+
+.hero-score-figure {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+.hero-score-value {
+    @include numeral(2.6rem, 500);
+    color: var(--dharma-cream);
+}
+
+.hero-score-scale {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--dharma-text-secondary);
+}
+
+.hero-score-empty {
+    color: var(--dharma-text-muted);
+}
+
+.hero-score-stars {
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    color: var(--dharma-accent);
+}
+
+.hero-score-meta {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--dharma-text-secondary);
+}
+
+// Cifra a la izquierda, accion a la derecha.
+.hero-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.hero-score-body {
+    min-width: 0;
+}
+
+.hero-score-cta {
+    flex-shrink: 0;
+}
+
+// El acento dorado lo lleva solo tu nota: es un diario personal, tu nota manda
+// sobre la de la comunidad y sobre cualquier critico.
+.hero-score-mine {
+    .hero-score-label,
+    .hero-score-value {
+        color: var(--dharma-accent);
+    }
+}
+
+// --------------------------------------------------------------------------
+// 9.2 Critica externa: filas compactas debajo de las dos notas propias
+// --------------------------------------------------------------------------
+.hero-critics {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.hero-critic {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    font-size: 0.8rem;
+
+    & + .hero-critic {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+}
+
+.hero-critic-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    color: inherit;
+
+    &:hover .hero-critic-value {
+        color: var(--dharma-accent);
+    }
+
+    &:hover .hero-critic-out {
+        opacity: 1;
+    }
+}
+
+.hero-critic-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    color: var(--dharma-text-secondary);
+    font-weight: 500;
+}
+
+.hero-critic-out {
+    font-size: 0.68rem;
+    opacity: 0.4;
+    transition: opacity $transition-fast;
+}
+
+.hero-critic-value {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    font-variant-numeric: tabular-nums;
+    transition: color $transition-fast;
+}
+
+.hero-critic-scale {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--dharma-text-secondary);
+}
+
+.hero-critic-empty {
+    color: var(--dharma-text-muted);
+    font-weight: 500;
+}
+
+// Premios (OMDb): dato de prestigio, no una cifra. Cierra la columna en
+// tipografia chica para no robarle peso a las notas.
+.hero-awards {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 1.1rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--dharma-border);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--dharma-cream);
+    opacity: 0.85;
+
+    i {
+        color: var(--dharma-accent);
+        margin-top: 0.15rem;
+        flex-shrink: 0;
+    }
+}
+
+// Tu propia resena, destacada arriba de las de la comunidad.
+.community-review-mine {
+    border-color: rgba($color-accent-gold, 0.3);
+    background-color: rgba($color-accent-gold, 0.05);
+
+    .review-avatar {
+        background-color: rgba($color-accent-gold, 0.18);
+        color: var(--dharma-accent);
+    }
+}
+
+// --------------------------------------------------------------------------
+// 9.3 Reparto
+// --------------------------------------------------------------------------
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 0.75rem;
+}
+
+.cast-card {
+    @include detail-panel;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    min-width: 0;
+    transition: border-color $transition-fast;
+
+    &:hover {
+        border-color: rgba($color-accent-gold, 0.3);
+    }
+}
+
+// min-width:0 es lo que habilita el text-truncate dentro de un flex item.
+.cast-card-body,
+.season-item-body,
+.review-author-body {
+    min-width: 0;
+}
+
+.cast-name {
+    display: block;
+    font-size: 0.87rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+}
+
+.cast-role {
+    display: block;
+    font-size: 0.77rem;
+    color: var(--dharma-text-secondary);
+}
+
+// El boton alterna su propio texto segun el estado de Bootstrap Collapse
+// (.collapsed lo pone Bootstrap en el trigger cuando el panel esta cerrado).
+.btn-cast-toggle {
+    font-size: 0.85rem;
+
+    .cast-toggle-more {
+        display: none;
+    }
+
+    &.collapsed {
+        .cast-toggle-more {
+            display: inline;
+        }
+
+        .cast-toggle-less {
+            display: none;
+        }
+    }
+}
+
+// --------------------------------------------------------------------------
+// 9.4 Equipo tecnico
+// --------------------------------------------------------------------------
+.crew-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 0.75rem;
+}
+
+.crew-item {
+    padding: 0.75rem 0.9rem;
+    border-radius: $radius-md;
+    background-color: rgba(255, 255, 255, 0.035);
+    border: 1px solid var(--dharma-border);
+    min-width: 0;
+}
+
+.crew-job {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--dharma-accent);
+}
+
+.crew-names {
+    display: block;
+    font-size: 0.87rem;
+    line-height: 1.4;
+    color: var(--dharma-text-main);
+}
+
+// --------------------------------------------------------------------------
+// 9.5 Temporadas (solo series)
+// --------------------------------------------------------------------------
+.next-episode {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.7rem 1rem;
+    border-radius: $radius-md;
+    background-color: rgba($color-accent-info, 0.08);
+    border: 1px solid rgba($color-accent-info, 0.25);
+    font-size: 0.86rem;
+    color: var(--dharma-text-main);
+}
+
+.season-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.season-item {
+    @include detail-panel;
+    display: flex;
+    gap: 0.85rem;
+    padding: 0.75rem;
+    min-width: 0;
+}
+
+.season-poster {
+    width: 56px;
+    height: 84px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: $radius-sm;
+    border: 1px solid var(--dharma-border);
+}
+
+.season-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    margin-bottom: 0.15rem;
+}
+
+.season-meta {
+    font-size: 0.75rem;
+    color: var(--dharma-text-secondary);
+}
+
+.season-overview {
+    margin: 0.35rem 0 0;
+    font-size: 0.79rem;
+    line-height: 1.45;
+    color: var(--dharma-text-secondary);
+}
+
+// --------------------------------------------------------------------------
+// 9.6 Resenas de la comunidad
+// --------------------------------------------------------------------------
+.community-review {
+    @include detail-panel;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 0.85rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.community-review-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+}
+
+.review-author {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.review-avatar {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba($color-accent-gold, 0.14);
+    border: 1px solid rgba($color-accent-gold, 0.28);
+    color: var(--dharma-accent);
+    font-family: $font-family-headings;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.review-name {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+}
+
+.review-date {
+    display: block;
+    font-size: 0.74rem;
+    color: var(--dharma-text-secondary);
+}
+
+// --------------------------------------------------------------------------
+// 9.7 Ficha tecnica (columna lateral)
+// --------------------------------------------------------------------------
+.spec-panel {
+    @include detail-panel;
+    padding: 1.25rem 1.35rem;
+}
+
+.spec-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--dharma-border);
+    font-family: $font-family-headings;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dharma-cream);
+}
+
+.spec-list {
+    margin: 0;
+}
+
+.spec-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.spec-key {
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--dharma-text-secondary);
+}
+
+.spec-value {
+    margin: 0;
+    min-width: 0;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--dharma-text-main);
+
+    &.spec-value-num {
+        @include numeral(0.95rem, 600);
+        color: var(--dharma-cream);
+    }
+}
+
+.spec-block {
+    margin-top: 0.6rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--dharma-border);
+}
+
+.spec-block-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--dharma-text-secondary);
+}
+
+.spec-block-text {
+    margin: 0;
+    font-size: 0.83rem;
+    line-height: 1.5;
+    color: var(--dharma-text-main);
+}
+
+// Los enlaces externos reusan .diary-chip (del diario) pero, a diferencia de
+// los chips informativos, son clickeables: necesitan estado de hover/foco.
+.spec-block a.diary-chip {
+    transition: border-color $transition-fast, color $transition-fast, background-color $transition-fast;
+
+    &:hover,
+    &:focus-visible {
+        border-color: rgba($color-accent-gold, 0.45);
+        background-color: rgba($color-accent-gold, 0.1);
+        color: var(--dharma-cream);
+    }
 }

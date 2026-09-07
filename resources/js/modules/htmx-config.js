@@ -103,8 +103,23 @@ export function initHtmxConfig() {
 
     // Slider de calificación del modal. Delegado en document porque htmx inyecta
     // el modal después de cargar la página.
+    // Espejo exacto de Review::getRatingLabelAttribute(). Si se toca una, se
+    // toca la otra: el modal muestra esta etiqueta mientras se arrastra y el
+    // diario muestra la del modelo una vez guardada, y tienen que coincidir.
+    function ratingLabel(value) {
+        if (value >= 9.5) return 'Obra Maestra';
+        if (value >= 8.5) return 'Excelente';
+        if (value >= 7.5) return 'Muy Buena';
+        if (value >= 6.5) return 'Buena';
+        if (value >= 5.5) return 'Interesante / Pasable';
+        if (value >= 4.5) return 'Regular';
+        if (value >= 3.5) return 'Floja / Mediocre';
+        if (value >= 2.0) return 'Mala';
+        return 'Pésima';
+    }
+
     function syncRateSlider(slider, { touched = false } = {}) {
-        const wrapper = slider.closest('.rate-hero-card') || slider.closest('.rate-hero-content') || slider.closest('.rate-hero-inner') || slider.closest('form');
+        const wrapper = slider.closest('form');
         if (!wrapper) return;
 
         const value = parseFloat(slider.value);
@@ -114,13 +129,17 @@ export function initHtmxConfig() {
         const pct = ((value - slider.min) / (slider.max - slider.min)) * 100;
         slider.style.setProperty('--rate-progress', `${pct}%`);
 
-        // El número grande solo se muestra si ya había una nota guardada, o si
-        // el usuario recién movió el slider — así no parece pre-calificada.
+        // El número solo se muestra si ya había una nota guardada, o si el
+        // usuario recién movió el slider — así no parece pre-calificada.
         if (touched) slider.dataset.hasRating = 'true';
         if (slider.dataset.hasRating !== 'true') return;
 
         const valueEl = wrapper.querySelector('#rateValue');
         if (valueEl) valueEl.textContent = value.toFixed(1);
+
+        // Ocupa el lugar donde antes estaba la estrella gigante.
+        const labelEl = wrapper.querySelector('#rateLabel');
+        if (labelEl) labelEl.textContent = ratingLabel(value);
     }
 
     document.addEventListener('input', (e) => {

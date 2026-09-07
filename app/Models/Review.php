@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Query\Builder;
 
 class Review extends Model
 {
@@ -46,6 +47,59 @@ class Review extends Model
     }
 
     /**
+     * Entradas de un usuario sobre un título, de la más reciente a la más vieja.
+     *
+     * Desde que existen los re-visionados hay N filas por (user, media): esta
+     * es la consulta canónica para "mis registros de este título". Las que no
+     * tienen fecha (por ver / viéndola) van al final, no al principio.
+     */
+    public function scopeEntriesFor($query, int $userId, int $mediaItemId)
+    {
+        return $query
+            ->where('user_id', $userId)
+            ->where('media_item_id', $mediaItemId)
+            ->orderByRaw('watched_date is null')
+            ->orderByDesc('watched_date')
+            ->orderByDesc('id');
+    }
+
+    /**
+     * Una sola fila por usuario: la última que cumpla la condición.
+     *
+     * Con re-visionados, promediar o listar "todas las filas" del título
+     * cuenta al mismo usuario tantas veces como lo haya visto. Esto deja la
+     * entrada más nueva (MAX(id)) de cada uno.
+     *
+     * @param  callable(Builder): void  $filter
+     */
+    public function scopeLatestPerUser($query, int $mediaItemId, callable $filter)
+    {
+        $filter($query->where('media_item_id', $mediaItemId));
+
+        return $query->whereIn('id', function ($sub) use ($mediaItemId, $filter) {
+            $sub->selectRaw('max(id)')
+                ->from('reviews')
+                ->where('media_item_id', $mediaItemId)
+                ->groupBy('user_id');
+
+            $filter($sub);
+        });
+    }
+
+    /**
+     * Etiqueta en español del estado de visionado.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'watching' => 'Viéndola',
+            'plan_to_watch' => 'Quiero verla',
+            'dropped' => 'Abandonada',
+            default => 'Vista',
+        };
+    }
+
+    /**
      * Get equivalent 5-star score (e.g. 10 -> 5.0, 8 -> 4.0)
      */
     public function getStarRatingAttribute(): ?float
@@ -58,7 +112,9 @@ class Review extends Model
      */
     public function getRatingLabelAttribute(): ?string
     {
-        if ($this->rating === null) return null;
+        if ($this->rating === null) {
+            return null;
+        }
 
         return match (true) {
             $this->rating >= 9.5 => 'Obra Maestra',

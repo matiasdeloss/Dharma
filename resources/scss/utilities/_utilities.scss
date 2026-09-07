@@ -31,6 +31,13 @@
     color: var(--dharma-cream) !important;
 }
 
+// El azul de la paleta. Existia como variable pero sin utilidad, asi que las
+// vistas venian usando `.text-info` de Bootstrap (#0dcaf0, un cyan que no es
+// de este proyecto). No se pisa `.text-info` para no afectar otros usos.
+.text-accent-info {
+    color: $color-accent-info !important;
+}
+
 .badge-sage {
     background-color: rgba(105, 117, 101, 0.2) !important;
     color: var(--dharma-sage) !important;

@@ -2,16 +2,20 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class TmdbService
 {
     protected string $baseUrl;
+
     protected ?string $apiKey;
+
     protected ?string $readToken;
+
     protected string $imageBaseUrl;
+
     protected string $language;
 
     public function __construct()
@@ -28,7 +32,7 @@ class TmdbService
      */
     public function isConfigured(): bool
     {
-        return !empty($this->apiKey) || !empty($this->readToken);
+        return ! empty($this->apiKey) || ! empty($this->readToken);
     }
 
     /**
@@ -52,19 +56,19 @@ class TmdbService
      */
     public function get(string $endpoint, array $params = []): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return $this->getMockData($endpoint, $params);
         }
 
         $params['language'] = $params['language'] ?? $this->language;
 
         // If using API Key (v3 auth) and no bearer token
-        if (!$this->readToken && $this->apiKey) {
+        if (! $this->readToken && $this->apiKey) {
             $params['api_key'] = $this->apiKey;
         }
 
         try {
-            $cacheKey = 'tmdb_' . md5($endpoint . serialize($params));
+            $cacheKey = 'tmdb_'.md5($endpoint.serialize($params));
 
             // Dynamic caching: Details are static (24h), trending/popular (12h), search (4h)
             $ttl = match (true) {
@@ -81,11 +85,13 @@ class TmdbService
                     return $response->json();
                 }
 
-                Log::warning("TMDB API Error [{$response->status()}]: " . $response->body());
+                Log::warning("TMDB API Error [{$response->status()}]: ".$response->body());
+
                 return [];
             });
         } catch (\Exception $e) {
-            Log::error("TMDB API Exception: " . $e->getMessage());
+            Log::error('TMDB API Exception: '.$e->getMessage());
+
             return [];
         }
     }
@@ -151,16 +157,6 @@ class TmdbService
     }
 
     /**
-     * Get backdrops and posters for a specific TV show
-     */
-    public function getTvImages(int $tvId): array
-    {
-        return $this->get("/tv/{$tvId}/images", [
-            'include_image_language' => 'en,null,es',
-        ]);
-    }
-
-    /**
      * Search TV Shows specifically
      */
     public function searchTv(string $query, int $page = 1): array
@@ -197,8 +193,8 @@ class TmdbService
      */
     public function extractWatchProviders(array $mediaDetails, string $preferredRegion = 'AR'): array
     {
-        $allProviders = $mediaDetails['watch/providers']['results'] 
-            ?? $mediaDetails['watch_providers']['results'] 
+        $allProviders = $mediaDetails['watch/providers']['results']
+            ?? $mediaDetails['watch_providers']['results']
             ?? [];
 
         if (empty($allProviders)) {
@@ -217,14 +213,14 @@ class TmdbService
         $availableRegions = array_keys($allProviders);
 
         // Pick requested region (default AR), fallback to US, or first available
-        $currentRegion = in_array($preferredRegion, $availableRegions) 
-            ? $preferredRegion 
+        $currentRegion = in_array($preferredRegion, $availableRegions)
+            ? $preferredRegion
             : (in_array('US', $availableRegions) ? 'US' : reset($availableRegions));
 
         $regionData = $allProviders[$currentRegion] ?? [];
 
         return [
-            'has_providers' => !empty($regionData['flatrate']) || !empty($regionData['rent']) || !empty($regionData['buy']),
+            'has_providers' => ! empty($regionData['flatrate']) || ! empty($regionData['rent']) || ! empty($regionData['buy']),
             'region' => $currentRegion,
             'flatrate' => $regionData['flatrate'] ?? [],
             'rent' => $regionData['rent'] ?? [],
@@ -239,9 +235,10 @@ class TmdbService
      */
     public function imageUrl(?string $path, string $size = 'w500'): string
     {
-        if (!$path) {
+        if (! $path) {
             return asset('images/no-poster.svg');
         }
+
         return "{$this->imageBaseUrl}/{$size}{$path}";
     }
 
@@ -250,9 +247,10 @@ class TmdbService
      */
     public function backdropUrl(?string $path, string $size = 'original'): string
     {
-        if (!$path) {
+        if (! $path) {
             return '';
         }
+
         return "{$this->imageBaseUrl}/{$size}{$path}";
     }
 
@@ -320,7 +318,7 @@ class TmdbService
                         'vote_average' => 8.2,
                         'vote_count' => 5200,
                     ],
-                ]
+                ],
             ];
         }
 
@@ -352,7 +350,7 @@ class TmdbService
                     ],
                     'crew' => [
                         ['name' => 'Christopher Nolan', 'job' => 'Director'],
-                    ]
+                    ],
                 ],
                 'videos' => [
                     'results' => [
@@ -360,12 +358,12 @@ class TmdbService
                             'key' => 'zSWdZVtXT7E',
                             'site' => 'YouTube',
                             'type' => 'Trailer',
-                            'name' => 'Official Trailer'
-                        ]
-                    ]
+                            'name' => 'Official Trailer',
+                        ],
+                    ],
                 ],
                 'recommendations' => [
-                    'results' => []
+                    'results' => [],
                 ],
                 'watch/providers' => [
                     'results' => [
@@ -379,9 +377,9 @@ class TmdbService
                                 ['provider_id' => 2, 'provider_name' => 'Apple TV', 'logo_path' => '/peURlLlr8jggOwK53fJ5wdQl05y.jpg'],
                                 ['provider_id' => 3, 'provider_name' => 'Google Play Movies', 'logo_path' => '/tbEdFQDwx5LEVr8Wp6QO9vdpNsM.jpg'],
                             ],
-                        ]
-                    ]
-                ]
+                        ],
+                    ],
+                ],
             ];
         }
 
