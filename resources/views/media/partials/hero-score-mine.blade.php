@@ -34,27 +34,23 @@
             @endif
         </div>
 
-        {{-- Con un registro previo el botón edita ESA entrada (ruta por id);
-             sin registros abre el modal de alta. --}}
+        {{-- Siempre el modal de calificar: crea la entrada si no existe y
+             edita la nota si ya la tiene. --}}
         <button
             type="button"
-            class="btn btn-cine-secondary btn-pill-compact hero-score-cta"
-            hx-get="{{ $review ? route('reviews.edit', $review) : route('reviews.modal', ['type' => $type, 'id' => $tmdbId]) }}"
+            class="btn-cine-secondary btn-pill-compact hero-score-cta"
+            hx-get="{{ route('reviews.rate', ['type' => $type, 'id' => $tmdbId]) }}"
             hx-target="#logModalContent"
             data-bs-toggle="modal"
             data-bs-target="#logModal"
         >
-            <i class="bi {{ $review ? 'bi-pencil-square' : 'bi-star' }} me-1"></i>{{ $review ? 'Editar' : 'Calificar' }}
+            <i class="bi {{ $review && $review->rating !== null ? 'bi-pencil-square' : 'bi-star' }}"></i>{{ $review && $review->rating !== null ? 'Editar' : 'Calificar' }}
         </button>
     </div>
 
-    @if($review && $review->rating !== null)
-        @if($review->rating_label)
-            <span class="hero-score-meta">{{ $review->rating_label }}</span>
-        @endif
-    @elseif($review)
-        <span class="hero-score-meta">Registrada en tu diario, sin nota</span>
-    @else
+    @if($review && $review->rating === null)
+        <span class="hero-score-meta">Reseñada, sin nota todavía</span>
+    @elseif(! $review)
         <span class="hero-score-meta">Todavía no la calificaste</span>
     @endif
 </div>

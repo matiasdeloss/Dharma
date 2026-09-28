@@ -1,8 +1,10 @@
+@use '../base/variables' as *;
+
 // ==========================================================================
 // Media Sliders / Carousels (Horizontal Streaming Rows)
 // ==========================================================================
 
-$slider-gap: 1.15rem;
+$slider-gap: 0.7rem;
 
 // Cuántas cards entran por fila en cada breakpoint. La columna SIEMPRE llena
 // el 100% del carril exacto (sin esto, sobra o falta espacio y se asoma la
@@ -52,6 +54,30 @@ $slider-cards-xs: 2;
     display: block;
     font-size: 0.82rem;
     color: var(--dharma-text-secondary);
+}
+
+// Logo de plataforma al lado del titulo de una fila ("Lo mejor de Netflix").
+.section-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+// Link "Ver todo" a la derecha del titulo.
+.section-more {
+    margin-left: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--dharma-text-secondary);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color $transition-fast;
+
+    &:hover {
+        color: var(--dharma-accent);
+    }
 }
 
 .media-slider-track {

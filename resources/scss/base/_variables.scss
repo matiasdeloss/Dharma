@@ -18,6 +18,9 @@ $color-accent-sage-hover: #596455;
 $color-accent-taupe: #948979;
 $color-accent-gold: #d4af37;
 $color-accent-gold-hover: #bfa02f;
+// Dorado brillante para enfasis sobre fondos oscuros o con fotograma: el
+// #d4af37 de la paleta es apagado a proposito y ahi se hunde.
+$color-accent-gold-bright: #f2c94c;
 $color-accent-info: #67b0d1;
 $color-accent-purple: #b993d6;
 $color-accent-danger: #e06c75;
@@ -26,6 +29,10 @@ $color-accent-danger: #e06c75;
 $color-text-main: #f8fafc;
 $color-text-secondary: #948979;
 $color-text-muted: #796e5f;
+// Gris neutro (sin el tinte taupe del secundario) para meta fria: fechas,
+// separadores, acciones fantasma. El taupe sobre superficies oscuras se lee
+// como amarillo apagado y pelea con el dorado del acento.
+$color-text-neutral: #9aa3ad;
 $color-text-dim: #5c5346;
 
 // Borders

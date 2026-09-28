@@ -58,13 +58,17 @@ export function initToastSystem() {
         toastEl.innerHTML = `
             <div class="toast-dharma-header">
                 <i class="bi ${icon}"></i>
-                <span class="toast-dharma-title">${title || defaultTitle}</span>
+                <span class="toast-dharma-title"></span>
             </div>
-            <div class="toast-dharma-body">
-                ${message}
-            </div>
+            <div class="toast-dharma-body"></div>
             ${actionHtml}
         `;
+
+        // Título y mensaje como texto, nunca como HTML: vienen del servidor y
+        // pueden llevar datos de afuera (un título de TMDB, lo que escribió
+        // alguien). Con innerHTML serían una puerta a inyectar scripts.
+        toastEl.querySelector('.toast-dharma-title').textContent = title || defaultTitle;
+        toastEl.querySelector('.toast-dharma-body').textContent = message;
 
         document.body.appendChild(toastEl);
 

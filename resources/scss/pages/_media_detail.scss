@@ -1,3 +1,5 @@
+@use '../base/variables' as *;
+
 // ==========================================================================
 // Media Detail Page (Letterboxd Cinema Style) - Dharma Cinema
 // ==========================================================================
@@ -68,19 +70,6 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
 // --------------------------------------------------------------------------
 // 5. Cajas Laterales de Acciones y Notas (Columna Derecha)
 // --------------------------------------------------------------------------
-.badge-media-type {
-    background-color: rgba(223, 208, 184, 0.12);
-    color: var(--dharma-cream);
-    font-weight: 600;
-    border: 1px solid rgba(223, 208, 184, 0.35);
-    border-radius: $radius-sm;
-    padding: 0.35em 0.7em;
-    font-size: 0.8rem;
-    display: inline-flex;
-    align-items: center;
-    line-height: 1.2;
-}
-
 // --------------------------------------------------------------------------
 // 6. Plataformas de Streaming ("Disponible en:")
 // --------------------------------------------------------------------------
@@ -106,6 +95,27 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+}
+
+// Plataforma del usuario: anillo dorado y un tilde chico, para que se
+// distinga de un vistazo de las que no tiene.
+.provider-pill-inline.is-mine {
+    outline: 2px solid var(--dharma-accent);
+    outline-offset: 1px;
+    position: relative;
+
+    &::after {
+        content: '\F26A'; // bi-check-circle-fill
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        right: -5px;
+        bottom: -5px;
+        font-size: 0.8rem;
+        line-height: 1;
+        color: var(--dharma-accent);
+        background-color: var(--dharma-bg);
+        border-radius: 50%;
     }
 }
 
@@ -158,7 +168,7 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
 // ==========================================================================
 // Material de toda la seccion: superficie opaca + 1px de borde, igual que
 // .diary-entry del diario. Nada de vidrio esmerilado aca — el vidrio existe
-// para leer texto sobre un fotograma variable (.hero-stats-row, .stat-tile);
+// para leer texto sobre un fotograma variable (.stat-tile);
 // abajo del hero el fondo ya es plano (--dharma-bg), asi que el blur no
 // resolveria ningun problema de contraste y solo agregaria ruido.
 @mixin detail-panel {
@@ -234,10 +244,10 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
 }
 
 .hero-score-stars {
-    margin-top: 0.3rem;
-    font-size: 0.8rem;
-    letter-spacing: 0.08em;
-    color: var(--dharma-accent);
+    margin-top: 0.35rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.1em;
+    color: var(--dharma-gold-bright);
 }
 
 .hero-score-meta {
@@ -267,9 +277,12 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
 // El acento dorado lo lleva solo tu nota: es un diario personal, tu nota manda
 // sobre la de la comunidad y sobre cualquier critico.
 .hero-score-mine {
-    .hero-score-label,
+    .hero-score-label {
+        color: var(--dharma-gold-bright);
+    }
+
     .hero-score-value {
-        color: var(--dharma-accent);
+        color: var(--dharma-gold-bright);
     }
 }
 
@@ -394,11 +407,45 @@ $media-cast-avatar-size: 44px;               // Diámetro de las fotos circulare
     gap: 0.75rem;
     padding: 0.6rem 0.75rem;
     min-width: 0;
-    transition: border-color $transition-fast;
+    transition: border-color $transition-fast, background-color $transition-fast;
 
     &:hover {
         border-color: rgba($color-accent-gold, 0.3);
     }
+}
+
+// Como boton (abre el panel lateral): mismo look, cursor y un chevron que
+// aparece al pasar por encima para decir "hay mas".
+.cast-card-btn {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+
+    &:hover,
+    &:focus-visible {
+        background-color: rgba(255, 255, 255, 0.04);
+
+        .cast-card-chevron {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--dharma-accent);
+        outline-offset: 2px;
+    }
+}
+
+.cast-card-chevron {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--dharma-text-secondary);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity $transition-fast, transform $transition-fast;
 }
 
 // min-width:0 es lo que habilita el text-truncate dentro de un flex item.

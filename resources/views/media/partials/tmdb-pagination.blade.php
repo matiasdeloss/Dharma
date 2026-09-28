@@ -6,7 +6,8 @@
     clases `.pagination` de Bootstrap a propósito, para heredar el estilo Dharma
     que ya está definido en pages/_library.scss.
 
-    Espera: $page, $totalPages, $query
+    Espera: $page, $totalPages y, o bien $query (búsqueda), o bien $route +
+    $params (cualquier otro listado, p. ej. Explorar).
 --}}
 @php
     // TMDB no devuelve nada más allá de la página 500, aunque `total_pages`
@@ -25,7 +26,9 @@
         $end = min($lastPage, $start + ($window * 2));
     }
 
-    $linkTo = fn (int $n) => route('media.search', ['q' => $query, 'page' => $n]);
+    $linkTo = isset($route)
+        ? fn (int $n) => route($route, ($params ?? []) + ['page' => $n])
+        : fn (int $n) => route('media.search', ['q' => $query, 'page' => $n]);
 @endphp
 
 @if($lastPage > 1)

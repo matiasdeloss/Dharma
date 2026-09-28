@@ -10,26 +10,7 @@
     :backdrop="$headerBackdrop"
 >
     <x-slot:aside>
-        <div class="stat-tile-group">
-            <div class="stat-tile">
-                <div class="stat-tile-value">{{ $stats['total_logged'] }}</div>
-                <span class="stat-tile-label">Registros</span>
-            </div>
-            <div class="stat-tile">
-                <div class="stat-tile-value">{{ $stats['total_hours'] }}<span class="fs-6">h</span></div>
-                <span class="stat-tile-label">Tiempo</span>
-            </div>
-            <div class="stat-tile">
-                <div class="stat-tile-value text-accent">
-                    {{ $stats['avg_rating'] > 0 ? number_format($stats['avg_rating'], 1) : '—' }}
-                </div>
-                <span class="stat-tile-label">Promedio</span>
-            </div>
-            <div class="stat-tile">
-                <div class="stat-tile-value text-purple">{{ $stats['total_rewatches'] }}</div>
-                <span class="stat-tile-label">Re-vistas</span>
-            </div>
-        </div>
+        @include('reviews.partials.diary-stats', ['stats' => $stats])
     </x-slot:aside>
 </x-page-header>
 
@@ -37,7 +18,23 @@
     <!-- Filtros -->
     <div class="filter-bar mb-4">
         <form action="{{ route('reviews.index') }}" method="GET" class="row g-2 align-items-center">
-            <div class="col-md-3 col-sm-6">
+            {{-- Busca en títulos, reseñas y notas privadas (ReviewController::matchesSearch). Se manda con Enter. --}}
+            <div class="col-12 col-lg">
+                <label for="filter-search" class="visually-hidden">Buscar en tu diario</label>
+                <div class="dharma-search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input
+                        type="search"
+                        id="filter-search"
+                        name="buscar"
+                        value="{{ $filterSearch }}"
+                        class="modal-form-control dharma-search-input w-100"
+                        placeholder="Buscar en tu diario: títulos, reseñas, notas..."
+                        autocomplete="off"
+                    >
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-auto">
                 <label for="filter-rating" class="visually-hidden">Filtrar por calificación</label>
                 <select id="filter-rating" name="rating" class="dharma-select w-100" onchange="this.form.submit()">
                     <option value="">Todas las calificaciones</option>
@@ -47,17 +44,7 @@
                     <option value="5.0" {{ $filterRating == '5.0' ? 'selected' : '' }}>5+ · Pasables</option>
                 </select>
             </div>
-            <div class="col-md-3 col-sm-6">
-                <label for="filter-status" class="visually-hidden">Filtrar por estado</label>
-                <select id="filter-status" name="status" class="dharma-select w-100" onchange="this.form.submit()">
-                    <option value="">Todos los estados</option>
-                    <option value="watched" {{ $filterStatus == 'watched' ? 'selected' : '' }}>Vistas</option>
-                    <option value="watching" {{ $filterStatus == 'watching' ? 'selected' : '' }}>En progreso</option>
-                    <option value="plan_to_watch" {{ $filterStatus == 'plan_to_watch' ? 'selected' : '' }}>Por ver</option>
-                    <option value="dropped" {{ $filterStatus == 'dropped' ? 'selected' : '' }}>Abandonadas</option>
-                </select>
-            </div>
-            <div class="col-md-2 col-sm-6">
+            <div class="col-sm-6 col-lg-auto">
                 <label for="filter-year" class="visually-hidden">Filtrar por año</label>
                 <select id="filter-year" name="year" class="dharma-select w-100" onchange="this.form.submit()">
                     <option value="">Todos los años</option>
@@ -66,15 +53,18 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-4 d-flex align-items-center justify-content-md-end gap-3">
-                <span class="text-secondary small">
+            <div class="col-12 col-lg-auto d-flex align-items-center justify-content-lg-end gap-3">
+                <span class="text-secondary small text-nowrap">
                     {{ $reviews->total() }} {{ $reviews->total() === 1 ? 'registro' : 'registros' }}
                 </span>
-                @if($filterRating || $filterStatus || $filterYear)
+                @if($filterRating || $filterYear || $filterSearch)
                     <a href="{{ route('reviews.index') }}" class="btn btn-sm btn-outline-secondary">
                         <i class="bi bi-x-circle me-1"></i> Limpiar
                     </a>
                 @endif
+                <a href="{{ route('reviews.stats', array_filter(['year' => $filterYear])) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-bar-chart-line me-1"></i> Estadísticas
+                </a>
             </div>
         </form>
     </div>
@@ -94,11 +84,20 @@
         </div>
     @else
         <div class="empty-state">
-            @if($filterRating || $filterStatus || $filterYear)
+            @if($filterSearch)
+                <i class="bi bi-search empty-state-icon"></i>
+                <h4 class="empty-state-title">Nada en tu diario coincide con «{{ $filterSearch }}»</h4>
+                <p class="empty-state-text">
+                    La búsqueda mira títulos, reseñas y notas privadas. Probá con otra palabra{{ $filterRating || $filterYear ? ' o sin los filtros' : '' }}.
+                </p>
+                <a href="{{ route('reviews.index') }}" class="btn btn-cine-secondary px-4 py-2">
+                    <i class="bi bi-x-circle me-1"></i> Limpiar búsqueda
+                </a>
+            @elseif($filterRating || $filterYear)
                 <i class="bi bi-funnel empty-state-icon"></i>
                 <h4 class="empty-state-title">Ningún registro coincide con estos filtros</h4>
                 <p class="empty-state-text">
-                    Probá aflojando la calificación mínima, o cambiando el estado o el año.
+                    Probá aflojando la calificación mínima o cambiando el año.
                 </p>
                 <a href="{{ route('reviews.index') }}" class="btn btn-cine-secondary px-4 py-2">
                     <i class="bi bi-x-circle me-1"></i> Limpiar filtros

@@ -1,0 +1,220 @@
+@use '../base/variables' as *;
+
+// ==========================================================================
+// Charts (SVG/HTML inline, sin libreria) + pagina "Tu diario en numeros"
+// ==========================================================================
+// Una sola serie por grafico, asi que una sola tonalidad: el dorado del
+// proyecto. La barra maxima va en dorado pleno y el resto atenuado, para que
+// el ojo encuentre el pico sin leer numeros. El texto nunca usa el color de
+// la serie (regla del skill dataviz).
+
+.chart {
+    margin: 0;
+    width: 100%;
+
+    svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+}
+
+.chart-grid {
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 1;
+}
+
+.chart-axis {
+    stroke: rgba(255, 255, 255, 0.18);
+    stroke-width: 1;
+}
+
+.chart-tick,
+.chart-label {
+    font-family: $font-family-body;
+    font-size: 11px;
+    fill: var(--dharma-text-secondary);
+}
+
+.chart-value {
+    font-family: $font-family-headings;
+    font-size: 12px;
+    font-weight: 600;
+    fill: var(--dharma-text-main);
+}
+
+.chart-bar {
+    fill: rgba(212, 175, 55, 0.45);
+    transition: fill $transition-fast;
+
+    &.is-max {
+        fill: var(--dharma-accent);
+    }
+}
+
+// Zona de hover invisible del ancho de la columna: mas facil de acertar que
+// la barra fina, y trae el tooltip nativo (<title>).
+.chart-hit {
+    fill: transparent;
+}
+
+.chart-bar-group:hover .chart-bar {
+    fill: var(--dharma-accent);
+}
+
+.chart-bar-group:hover .chart-label {
+    fill: var(--dharma-text-main);
+}
+
+// --------------------------------------------------------------------------
+// Barras horizontales (ranking)
+// --------------------------------------------------------------------------
+.chart-hbars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.chart-hbar-row {
+    display: grid;
+    grid-template-columns: minmax(90px, 30%) 1fr 2.5rem;
+    align-items: center;
+    gap: 0.6rem;
+
+    &:hover .chart-hbar-fill {
+        background-color: var(--dharma-accent);
+    }
+}
+
+.chart-hbar-label {
+    font-size: 0.8rem;
+    color: var(--dharma-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chart-hbar-track {
+    display: block;
+    height: 10px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.chart-hbar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background-color: rgba(212, 175, 55, 0.45);
+    transition: background-color $transition-fast;
+
+    &.is-max {
+        background-color: var(--dharma-accent);
+    }
+}
+
+.chart-hbar-value {
+    font-family: $font-family-headings;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    text-align: right;
+}
+
+// --------------------------------------------------------------------------
+// Pagina de estadisticas
+// --------------------------------------------------------------------------
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+
+    @media (min-width: 992px) {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.stats-card {
+    padding: 1.25rem 1.5rem 1.5rem;
+    background-color: var(--dharma-elevated);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-lg;
+    min-width: 0;
+}
+
+.stats-card-wide {
+    @media (min-width: 992px) {
+        grid-column: 1 / -1;
+    }
+}
+
+.stats-card-title {
+    font-family: $font-family-headings;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    margin-bottom: 0.15rem;
+}
+
+.stats-card-help {
+    font-size: 0.8rem;
+    color: var(--dharma-text-secondary);
+    margin-bottom: 1rem;
+}
+
+// Top 5 del periodo
+.stats-top {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+}
+
+.stats-top-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: $radius-md;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.stats-top-rank {
+    @include numeral(1.1rem, 600);
+    width: 1.6rem;
+    text-align: center;
+    color: var(--dharma-accent);
+}
+
+.stats-top-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &:hover {
+        color: var(--dharma-accent);
+    }
+}
+
+.stats-top-rating {
+    @include numeral(1rem, 600);
+    color: var(--dharma-text-main);
+}
+
+.stats-top-scale {
+    font-size: 0.7rem;
+    color: var(--dharma-text-secondary);
+}

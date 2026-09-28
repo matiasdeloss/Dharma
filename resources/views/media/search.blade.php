@@ -72,8 +72,8 @@
                 Probá con el título original, o revisá la ortografía. La búsqueda cubre
                 películas y series de TMDB.
             </p>
-            <a href="{{ route('home') }}" class="btn btn-cine-secondary px-4 py-2">
-                <i class="bi bi-compass me-1"></i> Volver a explorar
+            <a href="{{ route('explore.index') }}" class="btn btn-cine-secondary px-4 py-2">
+                <i class="bi bi-compass me-1"></i> Ir a Explorar
             </a>
         </div>
     @else

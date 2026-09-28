@@ -1,3 +1,5 @@
+@use '../base/variables' as *;
+
 // ==========================================================================
 // Botones Dharma
 // ==========================================================================
@@ -37,6 +39,13 @@
                 transform $transition-fast,
                 box-shadow $transition-fast;
 
+    // La animacion vive aca y no en cada variante: asi "Ver trailer" y "En tu
+    // Watchlist" se mueven exactamente igual aunque sean variantes distintas.
+    &:hover,
+    &:focus-visible {
+        transform: scale(1.04);
+    }
+
     &:active {
         transform: scale(0.97);
     }
@@ -65,7 +74,6 @@
     &:focus {
         background-color: var(--dharma-accent-hover);
         color: #222831;
-        transform: scale(1.04);
         box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35);
     }
 }
@@ -83,7 +91,6 @@
         background-color: #3b4554;
         border-color: rgba(255, 255, 255, 0.25);
         color: #ffffff;
-        transform: scale(1.04);
     }
 }
 
@@ -152,8 +159,3 @@
     padding: 0.75rem 1.75rem;
 }
 
-// Alias del nombre viejo del boton de borrar del modal, para no tener que
-// tocar `log-modal.blade.php` mientras se esta editando en paralelo.
-.btn-danger-ghost {
-    @extend .btn-cine-danger;
-}

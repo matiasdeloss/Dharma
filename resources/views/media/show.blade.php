@@ -123,6 +123,10 @@
             }
         }
     }
+
+    // La web oficial viene de TMDB, que puede editar cualquiera: solo se
+    // enlaza si es http(s), así un `javascript:` nunca llega a un href.
+    $homepage = Str::startsWith($media['homepage'] ?? '', ['http://', 'https://']) ? $media['homepage'] : null;
 @endphp
 
 @section('title', $title . ($year ? " ({$year})" : ''))
@@ -199,13 +203,20 @@
                     </span>
                     @if(!empty($watchProviders['has_providers']))
                         @php
+                            // Primero lo que se ve por suscripcion, despues alquiler; y
+                            // dentro de eso, las plataformas del usuario adelante.
                             $allPills = collect($watchProviders['flatrate'] ?? [])
+                                ->concat($watchProviders['ads'] ?? [])
+                                ->concat($watchProviders['free'] ?? [])
                                 ->concat($watchProviders['rent'] ?? [])
                                 ->unique('provider_id')
+                                ->sortBy(fn ($p) => in_array($p['provider_id'], $myProviders, true) ? 0 : 1)
                                 ->values();
                         @endphp
                         @foreach($allPills as $provider)
-                            <div class="provider-pill-inline" data-bs-toggle="tooltip" title="{{ $provider['provider_name'] }}">
+                            {{-- Bloque y no `@php(...)`: la forma corta se traga todo hasta el proximo @endphp del archivo. --}}
+                            @php $mine = in_array($provider['provider_id'], $myProviders, true); @endphp
+                            <div class="provider-pill-inline {{ $mine ? 'is-mine' : '' }}" data-bs-toggle="tooltip" title="{{ $provider['provider_name'] }}{{ $mine ? ' · tu plataforma' : '' }}">
                                 <img src="https://image.tmdb.org/t/p/w92{{ $provider['logo_path'] }}" alt="{{ $provider['provider_name'] }}" loading="lazy">
                             </div>
                         @endforeach
@@ -229,7 +240,7 @@
             <div class="d-flex flex-wrap align-items-center gap-2 pt-2">
                 <!-- Log / Review Button (HTMX Loaded) -->
                 @include('reviews.partials.log-button-state', [
-                    'entries' => $userEntries,
+                    'review' => $userReview,
                     'type' => $type,
                     'tmdbId' => $media['id']
                 ])
@@ -245,8 +256,19 @@
                     'voteAverage' => $media['vote_average'] ?? null,
                 ])
 
+                <button
+                    type="button"
+                    class="btn-cine-secondary"
+                    hx-get="{{ route('lists.picker', ['type' => $type, 'id' => $media['id']]) }}"
+                    hx-target="#logModalContent"
+                    data-bs-toggle="modal"
+                    data-bs-target="#logModal"
+                >
+                    <i class="bi bi-collection"></i> Agregar a lista
+                </button>
+
                 @if($trailer)
-                    <button type="button" class="btn btn-outline-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#trailerModal">
+                    <button type="button" class="btn-cine-secondary" data-bs-toggle="modal" data-bs-target="#trailerModal">
                         <i class="bi bi-play-circle-fill"></i> Ver Trailer
                     </button>
                 @endif
@@ -259,7 +281,7 @@
         <div class="col-lg-3">
             <div class="hero-scores">
                 @include('media.partials.hero-score-mine', [
-                    'review' => $userScore,
+                    'review' => $userReview,
                     'type' => $type,
                     'tmdbId' => $media['id'],
                 ])
@@ -416,9 +438,25 @@
 
             <!-- Reseñas de la Comunidad -->
             <section class="info-section" aria-labelledby="community-heading">
-                <div class="section-header">
-                    <h2 class="section-title" id="community-heading">Reseñas de la Comunidad</h2>
-                    <span class="section-subtitle">Lo que escribieron otros usuarios de Dharma</span>
+                <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+                    <div class="section-header mb-0">
+                        <h2 class="section-title" id="community-heading">Reseñas de la Comunidad</h2>
+                        <span class="section-subtitle">Lo que escribieron otros usuarios de Dharma</span>
+                    </div>
+                    @auth
+                        @unless($userReview && ($userReview->review_text || $userReview->private_notes))
+                            <button
+                                type="button"
+                                class="btn btn-cine-secondary btn-pill-compact"
+                                hx-get="{{ route('reviews.write', ['type' => $type, 'id' => $media['id']]) }}"
+                                hx-target="#logModalContent"
+                                data-bs-toggle="modal"
+                                data-bs-target="#logModal"
+                            >
+                                <i class="bi bi-pencil-square me-1"></i>Escribir reseña
+                            </button>
+                        @endunless
+                    @endauth
                 </div>
 
                 {{-- Tu resena va primero y destacada. Antes vivia dentro de la
@@ -439,7 +477,7 @@
                             <button
                                 type="button"
                                 class="btn btn-cine-secondary btn-pill-compact"
-                                hx-get="{{ route('reviews.edit', $userReview) }}"
+                                hx-get="{{ route('reviews.write', ['type' => $type, 'id' => $media['id']]) }}"
                                 hx-target="#logModalContent"
                                 data-bs-toggle="modal"
                                 data-bs-target="#logModal"
@@ -448,14 +486,9 @@
                             </button>
                         </div>
 
-                        @if($userReview->is_rewatch || $userReview->contains_spoilers)
+                        @if($userReview->contains_spoilers)
                             <div class="diary-meta mb-2">
-                                @if($userReview->is_rewatch)
-                                    <span class="diary-chip diary-chip-rewatch"><i class="bi bi-arrow-repeat"></i>Re-visionado</span>
-                                @endif
-                                @if($userReview->contains_spoilers)
-                                    <span class="diary-chip"><i class="bi bi-eye-slash"></i>Contiene spoilers</span>
-                                @endif
+                                <span class="diary-chip"><i class="bi bi-eye-slash"></i>Contiene spoilers</span>
                             </div>
                         @endif
 
@@ -499,14 +532,9 @@
                             @endif
                         </div>
 
-                        @if($comReview->is_rewatch || $comReview->contains_spoilers)
+                        @if($comReview->contains_spoilers)
                             <div class="diary-meta mb-2">
-                                @if($comReview->is_rewatch)
-                                    <span class="diary-chip diary-chip-rewatch"><i class="bi bi-arrow-repeat"></i>Re-visionado</span>
-                                @endif
-                                @if($comReview->contains_spoilers)
-                                    <span class="diary-chip"><i class="bi bi-eye-slash"></i>Contiene spoilers</span>
-                                @endif
+                                <span class="diary-chip"><i class="bi bi-eye-slash"></i>Contiene spoilers</span>
                             </div>
                         @endif
 
@@ -524,7 +552,7 @@
                         <button
                             type="button"
                             class="btn btn-cine-primary"
-                            hx-get="{{ route('reviews.modal', ['type' => $type, 'id' => $media['id']]) }}"
+                            hx-get="{{ route('reviews.write', ['type' => $type, 'id' => $media['id']]) }}"
                             hx-target="#logModalContent"
                             data-bs-toggle="modal"
                             data-bs-target="#logModal"
@@ -666,7 +694,7 @@
                     </div>
                 @endif
 
-                @if($imdbId || !empty($media['homepage']))
+                @if($imdbId || $homepage)
                     <div class="spec-block">
                         <span class="spec-block-label">Enlaces</span>
                         <div class="d-flex flex-wrap gap-2">
@@ -676,8 +704,8 @@
                                     <i class="bi bi-box-arrow-up-right"></i>
                                 </a>
                             @endif
-                            @if(!empty($media['homepage']))
-                                <a href="{{ $media['homepage'] }}" target="_blank" rel="noopener noreferrer" class="diary-chip">
+                            @if($homepage)
+                                <a href="{{ $homepage }}" target="_blank" rel="noopener noreferrer" class="diary-chip">
                                     <i class="bi bi-globe2"></i> Sitio oficial
                                     <i class="bi bi-box-arrow-up-right"></i>
                                 </a>
@@ -735,7 +763,9 @@
                     <i class="bi bi-x-lg"></i>
                 </button>
                 <div class="modal-body p-0 ratio ratio-16x9">
-                    <iframe src="https://www.youtube.com/embed/{{ $trailer }}?enablejsapi=1" title="Trailer de {{ $title }}" allowfullscreen></iframe>
+                    {{-- `data-src` y no `src`: modules/trailer.js lo carga al abrir y
+                         lo saca al cerrar, asi el video no sigue sonando de fondo. --}}
+                    <iframe data-src="https://www.youtube.com/embed/{{ $trailer }}?autoplay=1" title="Trailer de {{ $title }}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
                 </div>
             </div>
         </div>

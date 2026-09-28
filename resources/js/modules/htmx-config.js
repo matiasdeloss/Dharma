@@ -53,10 +53,35 @@ export function initHtmxConfig() {
         }
     }
 
+    // Sumar/sacar títulos de una lista (MediaListController::toast).
+    function handleListUpdated(data) {
+        const message = (typeof data === 'object' && data !== null) ? data.message : data;
+        const type = (typeof data === 'object' && data !== null && data.type) ? data.type : 'success';
+        const title = (typeof data === 'object' && data !== null && data.title) ? data.title : 'Listas';
+
+        if (window.showNotification) {
+            window.showNotification(message || 'Lista actualizada.', type, title);
+        }
+    }
+
+    // Validación fallida en un form por HTMX (422, ver bootstrap/app.php). El
+    // form queda como estaba para que se pueda corregir y reenviar.
+    function handleFormInvalid(data) {
+        const message = (typeof data === 'object' && data !== null) ? data.message : data;
+
+        if (window.showNotification) {
+            window.showNotification(message || 'Revisá los datos e intentá de nuevo.', 'error', 'No se pudo guardar');
+        }
+    }
+
     // Listener 1: Eventos nativos de HTMX en document.body
     document.body.addEventListener('watchlistUpdated', (e) => handleWatchlist(e.detail));
     document.body.addEventListener('reviewSaved', (e) => handleReviewSaved(e.detail));
     document.body.addEventListener('authRequired', (e) => handleAuthRequired(e.detail));
+    // Sin respaldo en el Listener 2: con un 422 htmx no reemplaza nada, así
+    // que el form que disparó el evento sigue en la página y el evento llega.
+    document.body.addEventListener('formInvalid', (e) => handleFormInvalid(e.detail));
+    document.body.addEventListener('listUpdated', (e) => handleListUpdated(e.detail));
 
     // Listener 2: Respaldo directo en cabecera HTTP de respuesta
     document.addEventListener('htmx:afterOnLoad', (event) => {
@@ -99,56 +124,5 @@ export function initHtmxConfig() {
         btn.classList.remove('btn-pulse');
         void btn.offsetWidth; // reinicia la animación si se hace doble clic rápido
         btn.classList.add('btn-pulse');
-    });
-
-    // Slider de calificación del modal. Delegado en document porque htmx inyecta
-    // el modal después de cargar la página.
-    // Espejo exacto de Review::getRatingLabelAttribute(). Si se toca una, se
-    // toca la otra: el modal muestra esta etiqueta mientras se arrastra y el
-    // diario muestra la del modelo una vez guardada, y tienen que coincidir.
-    function ratingLabel(value) {
-        if (value >= 9.5) return 'Obra Maestra';
-        if (value >= 8.5) return 'Excelente';
-        if (value >= 7.5) return 'Muy Buena';
-        if (value >= 6.5) return 'Buena';
-        if (value >= 5.5) return 'Interesante / Pasable';
-        if (value >= 4.5) return 'Regular';
-        if (value >= 3.5) return 'Floja / Mediocre';
-        if (value >= 2.0) return 'Mala';
-        return 'Pésima';
-    }
-
-    function syncRateSlider(slider, { touched = false } = {}) {
-        const wrapper = slider.closest('form');
-        if (!wrapper) return;
-
-        const value = parseFloat(slider.value);
-
-        // Progreso para pintar el tramo recorrido de la barra (ver _modals.scss).
-        // Se actualiza siempre, se haya tocado el slider o no.
-        const pct = ((value - slider.min) / (slider.max - slider.min)) * 100;
-        slider.style.setProperty('--rate-progress', `${pct}%`);
-
-        // El número solo se muestra si ya había una nota guardada, o si el
-        // usuario recién movió el slider — así no parece pre-calificada.
-        if (touched) slider.dataset.hasRating = 'true';
-        if (slider.dataset.hasRating !== 'true') return;
-
-        const valueEl = wrapper.querySelector('#rateValue');
-        if (valueEl) valueEl.textContent = value.toFixed(1);
-
-        // Ocupa el lugar donde antes estaba la estrella gigante.
-        const labelEl = wrapper.querySelector('#rateLabel');
-        if (labelEl) labelEl.textContent = ratingLabel(value);
-    }
-
-    document.addEventListener('input', (e) => {
-        if (e.target.id === 'rateSlider') syncRateSlider(e.target, { touched: true });
-    });
-
-    // Estado inicial al abrir el modal (htmx ya insertó el contenido).
-    document.body.addEventListener('htmx:afterSwap', (e) => {
-        const slider = e.target.querySelector?.('#rateSlider');
-        if (slider) syncRateSlider(slider);
     });
 }

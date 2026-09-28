@@ -39,18 +39,8 @@
                         @if($entry->watched_date)
                             <span><i class="bi bi-calendar-event me-1"></i>{{ $entry->watched_date->translatedFormat('d M Y') }}</span>
                         @endif
-                        @if($entry->is_rewatch)
-                            <span class="diary-chip diary-chip-rewatch">
-                                <i class="bi bi-arrow-repeat"></i>Re-visionado
-                            </span>
-                        @endif
-                        {{-- Los estados distintos de "vista" ya se pueden elegir
-                             desde el modal: sin este chip, dos entradas del mismo
-                             título se veían idénticas. --}}
-                        @if($entry->status !== 'watched')
-                            <span class="diary-chip">
-                                <i class="bi bi-eye"></i>{{ $entry->status_label }}
-                            </span>
+                        @if($entry->review_text)
+                            <span class="diary-chip"><i class="bi bi-chat-left-text"></i>Reseñada</span>
                         @endif
                     </div>
                 </div>
@@ -64,9 +54,6 @@
                             </div>
                             <div class="diary-rating-stars">
                                 {{ number_format($entry->star_rating, 1) }} ★
-                                @if($entry->rating_label)
-                                    <span class="d-none d-sm-inline">· {{ $entry->rating_label }}</span>
-                                @endif
                             </div>
                         </div>
                     @endif
@@ -77,27 +64,36 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow-lg border border-secondary">
                             <li>
-                                {{-- Apunta a ESTA entrada por id: con re-visionados,
-                                     "editar el título" ya no quiere decir nada. --}}
                                 <button
                                     class="dropdown-item"
-                                    hx-get="{{ route('reviews.edit', $entry) }}"
+                                    hx-get="{{ route('reviews.rate', ['type' => $media->media_type, 'id' => $media->tmdb_id]) }}"
                                     hx-target="#logModalContent"
                                     data-bs-toggle="modal"
                                     data-bs-target="#logModal"
                                 >
-                                    <i class="bi bi-pencil-square me-2 text-accent"></i> Editar este registro
+                                    <i class="bi bi-star-fill me-2 text-accent"></i> Editar nota y fecha
                                 </button>
                             </li>
                             <li>
                                 <button
                                     class="dropdown-item"
-                                    hx-get="{{ route('reviews.modal', ['type' => $media->media_type, 'id' => $media->tmdb_id]) }}"
+                                    hx-get="{{ route('reviews.write', ['type' => $media->media_type, 'id' => $media->tmdb_id]) }}"
                                     hx-target="#logModalContent"
                                     data-bs-toggle="modal"
                                     data-bs-target="#logModal"
                                 >
-                                    <i class="bi bi-arrow-repeat me-2 text-purple"></i> Registrar de nuevo
+                                    <i class="bi bi-chat-left-text me-2 text-accent"></i> {{ $entry->review_text ? 'Editar reseña' : 'Escribir reseña' }}
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    class="dropdown-item"
+                                    hx-get="{{ route('lists.picker', ['type' => $media->media_type, 'id' => $media->tmdb_id]) }}"
+                                    hx-target="#logModalContent"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#logModal"
+                                >
+                                    <i class="bi bi-collection me-2 text-accent"></i> Agregar a una lista
                                 </button>
                             </li>
                             <li>

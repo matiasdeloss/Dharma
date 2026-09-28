@@ -1,0 +1,275 @@
+@use '../base/variables' as *;
+
+// ==========================================================================
+// Listas (resources/views/lists)
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Card de una lista en "Mis listas"
+// --------------------------------------------------------------------------
+// Misma superficie elevada que las entradas del diario; toda la card es el
+// link a la lista. El hover sube con translateY, nunca scale (texto nitido).
+.list-card {
+    display: block;
+    height: 100%;
+    padding: 1rem 1rem 1.1rem;
+    background-color: var(--dharma-elevated);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-lg;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color $transition-normal,
+                transform $transition-normal,
+                box-shadow $transition-normal;
+
+    &:hover,
+    &:focus-visible {
+        color: inherit;
+        border-color: rgba(212, 175, 55, 0.38);
+        transform: translateY(-2px);
+        box-shadow: $shadow-card;
+    }
+}
+
+// Los primeros cinco posters como un mazo abierto: cada uno se monta sobre
+// el siguiente y el primero queda adelante.
+.list-card-posters {
+    display: flex;
+    margin-bottom: 0.95rem;
+}
+
+.list-card-poster {
+    position: relative;
+    flex: 0 0 22%;
+    aspect-ratio: 2 / 3;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    background-color: #12151a;
+    box-shadow: 6px 0 12px rgba(0, 0, 0, 0.55);
+
+    & + & {
+        margin-left: -6%;
+    }
+
+    @for $i from 1 through 5 {
+        &:nth-child(#{$i}) {
+            z-index: 6 - $i;
+        }
+    }
+
+    img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    // Lugar vacio de una lista con menos de cinco titulos.
+    &.is-empty {
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px dashed var(--dharma-border);
+        box-shadow: none;
+    }
+}
+
+.list-card-title {
+    font-family: $font-family-headings;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    margin-bottom: 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.list-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--dharma-text-neutral);
+    font-variant-numeric: tabular-nums;
+}
+
+.list-card-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0.6rem 0 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--dharma-text-secondary);
+}
+
+// --------------------------------------------------------------------------
+// Modal "Agregar a lista"
+// --------------------------------------------------------------------------
+.list-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    margin-bottom: 1.3rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.list-picker-row {
+    margin: 0;
+
+    // Mientras viaja el pedido: el boton se apaga un poco.
+    &.htmx-request .list-picker-toggle {
+        opacity: 0.6;
+    }
+}
+
+// Cada lista es un boton que marca/desmarca el titulo. Misma superficie que
+// los controles del modal (.modal-form-control); marcada lleva el dorado.
+.list-picker-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    background-color: #1f252e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: $radius-md;
+    color: var(--dharma-text-main);
+    text-align: left;
+    transition: border-color $transition-fast, background-color $transition-fast, opacity $transition-fast;
+
+    .bi {
+        font-size: 1.05rem;
+        line-height: 1;
+        color: var(--dharma-text-neutral);
+        transition: color $transition-fast;
+    }
+
+    &:hover,
+    &:focus-visible {
+        border-color: rgba(212, 175, 55, 0.45);
+        outline: none;
+    }
+
+    &[aria-pressed='true'] {
+        background-color: rgba(212, 175, 55, 0.08);
+        border-color: rgba(212, 175, 55, 0.55);
+
+        .bi {
+            color: var(--dharma-accent);
+        }
+    }
+}
+
+.list-picker-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.list-picker-count {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--dharma-text-neutral);
+    font-variant-numeric: tabular-nums;
+}
+
+// La lista nueva va separada de las existentes; sin listas, sin filete.
+.list-picker + .list-picker-new {
+    padding-top: 1.1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+// --------------------------------------------------------------------------
+// Pagina de una lista
+// --------------------------------------------------------------------------
+.list-drag-hint {
+    font-size: 0.78rem;
+    color: var(--dharma-text-neutral);
+}
+
+.list-item-inner {
+    position: relative;
+    height: 100%;
+}
+
+// La card se agarra de cualquier lado para arrastrarla (modules/list-sorter.js).
+// Los links de adentro conservan su cursor de mano.
+.list-grid .movie-card {
+    cursor: grab;
+}
+
+// Quitar de la lista: arriba a la derecha del poster (a la izquierda esta la
+// cinta de la watchlist). Aparece al pasar el mouse; en touch, siempre.
+.list-remove-btn {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    z-index: 12; // sobre la card, que en hover sube a z-index 10
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    background-color: rgba(11, 14, 17, 0.78);
+    color: var(--dharma-text-main);
+    font-size: 0.72rem;
+    opacity: 0;
+    transition: opacity $transition-fast,
+                background-color $transition-fast,
+                border-color $transition-fast,
+                transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    &:hover,
+    &:focus-visible {
+        background-color: $color-accent-danger;
+        border-color: $color-accent-danger;
+        color: #ffffff;
+        outline: none;
+    }
+}
+
+.list-item:hover .list-remove-btn,
+.list-remove-btn:focus-visible {
+    opacity: 1;
+}
+
+// La card sube 5px en hover (components/_cards.scss): el boton la acompana.
+.list-item:hover .list-remove-btn {
+    transform: translateY(-5px);
+}
+
+@media (hover: none) {
+    .list-remove-btn {
+        opacity: 1;
+    }
+}
+
+// Mientras se arrastra: el lugar donde va a caer queda tenue y la card que
+// se lleva, con el borde dorado.
+.list-grid {
+    .is-drag-ghost {
+        opacity: 0.3;
+    }
+
+    .is-drag-chosen .movie-card {
+        border-color: rgba(212, 175, 55, 0.6);
+    }
+}
+
+// La copia que sigue al puntero (forceFallback de Sortable).
+.is-drag-fallback {
+    opacity: 0.92 !important;
+    cursor: grabbing;
+}

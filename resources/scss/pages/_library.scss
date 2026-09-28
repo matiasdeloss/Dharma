@@ -1,3 +1,6 @@
+@use '../base/variables' as *;
+@use '../components/modals';
+
 // ==========================================================================
 // Vistas de biblioteca personal: Diario y Watchlist
 // ==========================================================================
@@ -188,6 +191,26 @@
         background-color: #1f252e;
         color: var(--dharma-text-main);
     }
+}
+
+// Buscador del diario: la superficie de los controles del proyecto
+// (.modal-form-control) con la lupa adentro.
+.dharma-search {
+    position: relative;
+
+    > .bi {
+        position: absolute;
+        top: 50%;
+        left: 0.95rem;
+        transform: translateY(-50%);
+        font-size: 0.9rem;
+        color: var(--dharma-text-neutral);
+        pointer-events: none;
+    }
+}
+
+.dharma-search-input {
+    padding-left: 2.5rem;
 }
 
 // --------------------------------------------------------------------------
@@ -435,16 +458,90 @@
 }
 
 // --------------------------------------------------------------------------
-// Prioridad y nota de la watchlist
+// Disponibilidad en mis plataformas (watchlist)
 // --------------------------------------------------------------------------
-// Las columnas `priority` y `notes` existian desde la primera migracion y no
-// tenian ninguna interfaz. El color codifica urgencia y sigue la paleta: rojo
-// del proyecto para alta, dorado para media, salvia para baja.
+// Fila de logos chicos debajo del titulo: solo las plataformas del usuario
+// donde el titulo se ve hoy por suscripcion. Sin plataformas no se pinta nada.
+.wl-availability {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+}
+
+.wl-availability-logo {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    background-color: var(--dharma-surface);
+}
+
+.wl-availability-label {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--dharma-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+// Toggle del filtro "solo lo que puedo ver hoy": pill con estado.
+// Poster del modal "Elegir al azar" cuando la columna del fotograma no se
+// ve (bajo lg). En lg en adelante lo oculta `d-lg-none`.
+.random-pick-poster {
+    display: block;
+    width: 120px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: $radius-md;
+    box-shadow: $shadow-card;
+    margin-bottom: 1rem;
+}
+
+.wl-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: $radius-pill;
+    border: 1px solid var(--dharma-border);
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--dharma-text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color $transition-fast, color $transition-fast, background-color $transition-fast;
+
+    &:hover {
+        color: var(--dharma-text-main);
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    &.is-on {
+        color: var(--dharma-accent);
+        border-color: rgba(212, 175, 55, 0.45);
+        background-color: rgba(212, 175, 55, 0.1);
+    }
+}
+
+.wl-filter-count {
+    padding: 0.05rem 0.45rem;
+    border-radius: $radius-pill;
+    background-color: rgba(255, 255, 255, 0.08);
+    font-size: 0.7rem;
+}
+
+// --------------------------------------------------------------------------
+// Nota de la watchlist
+// --------------------------------------------------------------------------
+// Un boton chico debajo del titulo que abre el dropdown con el textarea. Con
+// nota guardada se pinta dorado y el icono pasa a la version rellena.
 .watchlist-meta {
     margin-top: 0.5rem;
 }
 
-.wl-priority {
+.wl-note-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -464,34 +561,11 @@
         border-color: rgba(255, 255, 255, 0.25);
         color: var(--dharma-text-main);
     }
-}
 
-.wl-priority-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background-color: currentColor;
-}
-
-.wl-priority-high {
-    color: $color-accent-danger;
-    border-color: rgba(224, 108, 117, 0.35);
-}
-
-.wl-priority-medium {
-    color: var(--dharma-accent);
-    border-color: rgba(212, 175, 55, 0.32);
-}
-
-.wl-priority-low {
-    color: var(--dharma-sage);
-    border-color: rgba(105, 117, 101, 0.4);
-}
-
-.wl-priority-note {
-    font-size: 0.65rem;
-    opacity: 0.8;
+    &.has-note {
+        color: var(--dharma-accent);
+        border-color: rgba(212, 175, 55, 0.32);
+    }
 }
 
 .wl-edit-menu {
