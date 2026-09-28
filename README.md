@@ -10,11 +10,11 @@ Diario y plataforma de cine y series. Buscá títulos, puntuá y reseñá lo que
 
 | Detalle de un título | Diario |
 | --- | --- |
-| ![Detalle](docs/screenshots/detalle.png) |
+| ![Detalle](docs/screenshots/detalle.png) | ![Diario](docs/screenshots/diario.png) |
 
-| Estadísticas | Watchlist |
-| --- | --- |
-| ![Estadísticas](docs/screenshots/estadisticas.png) | ![Watchlist](docs/screenshots/watchlist.png) |
+| Estadísticas |
+| --- |
+| ![Estadísticas](docs/screenshots/estadisticas.png) |
 
 ## Funcionalidades
 
