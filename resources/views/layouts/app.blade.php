@@ -284,7 +284,7 @@
                 Namaste and happy watching.
             </p>
             <p class="small text-muted mb-0">
-                Desarrollado con Laravel 12, Bootstrap 5, HTMX y la API de TMDB.
+                Desarrollado con Laravel 13, Bootstrap 5, HTMX y la API de TMDB.
             </p>
         </div>
     </footer>
