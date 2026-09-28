@@ -17,6 +17,15 @@ export default defineConfig({
             '~bootstrap-icons': 'bootstrap-icons',
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                // Bootstrap 5.3 todavia usa @import y funciones de color viejas
+                // por dentro; sus avisos no los podemos arreglar desde aca.
+                quietDeps: true,
+            },
+        },
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

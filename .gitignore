@@ -25,3 +25,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local
+/scratch
+/dashboard.html
+/.claude/launch.json

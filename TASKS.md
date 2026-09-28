@@ -9,30 +9,9 @@ Pendientes de Dharma. Los briefs completos de las features grandes están en
 
 
 
-- [ ] **Ocultar de "Títulos relacionados" lo que ya está en la watchlist** - pedido directo
-  - En `MediaController::show`, filtrar `$related` por `in_watchlist` antes de cortar en 18
-  - Bloqueado: el agente del diario está en `MediaController`
 
-- [ ] **"Ver trailer" al sistema de botones** - hoy usa `btn-outline-danger` de Bootstrap
-  - Debería ser `.btn-cine-ghost`: es una acción terciaria, no compite con calificar
-  - Bloqueado: está dentro de `media/show.blade.php`, tomado por el agente
 
-- [ ] **Sacar el botón verde de "Tu nota" de la ficha** - pedido directo
-  - `reviews/partials/log-button-state.blade.php` usa `btn-outline-success`. Quedó redundante: la columna del hero ya muestra tu nota con su botón de Editar
-  - Ojo: ese partial es el destino de un fragmento out-of-band (`#log-action-container`), así que el contenedor tiene que seguir existiendo aunque quede vacío
-  - Bloqueado: el agente del diario lo está tocando
 
-- [ ] **Pasar el botón de eliminar del modal a `.btn-cine-danger`** - el alias ya funciona
-  - `.btn-danger-ghost` quedó como alias apuntando a la variante nueva. Falta cambiar el nombre en `log-modal.blade.php` y borrar el alias
-  - Bloqueado: `log-modal.blade.php` lo está tocando el agente
-
-- [ ] **Diario real: re-visionados + estados + fecha editable** - el arreglo de fondo más importante
-  - Brief: `.claude/research/2026-09-06-diario-revisionados.md`
-  - El modal manda `status=watched` e `is_rewatch=0` hardcodeados (`log-modal.blade.php:46-47`) → 3 de los 4 estados y el flag de re-visionado son inalcanzables desde la UI
-  - Por eso los filtros "En progreso"/"Por ver" del diario y la stat "Re-vistas" están muertos
-  - El índice único `reviews(user_id, media_item_id)` hace que volver a loguear una peli **pise** la entrada anterior: hoy no es un diario, es un rating por película
-  - Bloqueante: migración para quitar ese índice único
-  - `watched_date` va en un hidden, no se puede corregir "la vi hace dos semanas"
 
 
 
@@ -74,6 +53,52 @@ Pendientes de Dharma. Los briefs completos de las features grandes están en
 - Todo lo social (perfiles públicos, follow, feed de actividad, comentarios) — un dev solo no tiene masa crítica; el bloque "Reseñas de la Comunidad" ya alcanza como stub
 
 ## Done
+
+- [x] ~~**Listas, "Elegir al azar" y buscar en el diario**~~ (2026-09-24)
+  - **Listas propias** (`/listas`): privadas, numeradas o no, con descripción. Se suman títulos desde **"Agregar a lista"** en la ficha y en el menú de cada entrada del diario: un modal con un botón por lista y una fila para crear una nueva que ya incluye el título
+  - Se **ordenan arrastrando** las cards (SortableJS, dependencia nueva, MIT). Al soltar, htmx manda `items[]` en el orden nuevo; ojo: `hx-include` con `find ...` trae solo el PRIMER input
+  - Tablas `media_lists` y `media_list_items` (puesto 1..N sin huecos). Link "Listas" en el navbar solo con sesión; entre 992 y 1199px el nombre del usuario se esconde (queda el avatar) para que entre
+  - **"Elegir al azar"** en la watchlist: sortea un título (de lo disponible hoy si el filtro está puesto); "Elegir otro" no repite el anterior
+  - **Buscar en el diario**: títulos, reseñas y notas privadas, sin tildes ni mayúsculas. Parámetro `buscar` y no `q`, que es el del buscador del navbar
+  - De paso: el navbar de Explorar, Estadísticas y Ajustes quedaba "a medio camino" (dos listas de páginas que no coincidían en el layout; ahora es una sola, `$fullBleed`), la edad de los actores salía con decimales (`diffInYears` de Carbon 3), y la watchlist con el filtro puesto y nada disponible decía "Tu watchlist está vacía"
+  - 96/96 tests, 19 nuevos
+
+- [x] ~~**Seguridad (de la auditoría)**~~ (2026-09-24)
+  - **Login y registro con freno**: 5 intentos fallidos por minuto para el mismo correo + IP (criterio de Breeze) y 5 cuentas por hora por IP. El aviso sale en el form, en español, y no como la página 429
+  - **TMDB manda sobre el form** al dar de alta un título: antes cualquiera podía "bautizar" un título nuevo con el nombre o el póster que quisiera, y `media_items` es compartido. El form queda solo de respaldo si TMDB no responde
+  - **Toasts sin `innerHTML`** para título y mensaje: hoy eran textos fijos, pero era una puerta a XSS el día que un toast mostrara un título
+  - **Web oficial solo si es http(s)**: viene de TMDB, que edita cualquiera; un `javascript:` ya no llega a un href
+  - 77/77 tests, 5 nuevos
+
+- [x] ~~**Auditoría antes de subir a git: 7 bugs arreglados**~~ (2026-09-24)
+  - **Seeder roto en base nueva**: mandaba `is_rewatch` y `status`, que ya no existen, y una nota 9.5 (pasó a 10). Test nuevo que corre el seeder
+  - **Sticky roto en todo el sitio**: `overflow-x: hidden` en `html, body` volvía al body contenedor de scroll. Ahora es `clip`: el navbar y la ficha técnica quedan fijos
+  - **Explorar daba 500 la primera vez** (38 llamadas a TMDB en fila, 28 s): `TmdbService::getMany`/`detailsMany` piden en paralelo con `Http::pool`. En frío baja a ~9 s. Si "Para vos" sale vacío se guarda 10 min y no 6 h
+  - **Errores de TMDB cacheados**: un 429/500 dejaba la ficha en 404 durante 24 h. Ya no se guardan, y los `[]` que quedaron guardados se ignoran
+  - **Calificar sin estrellas no hacía nada**: el botón arranca deshabilitado, y cualquier error de validación por HTMX vuelve como 422 + toast (`formInvalid`), con mensajes en español
+  - **Logos gigantes en "Para vos"**: `.poster-wrapper img` les ganaba por orden. Las reglas del póster ahora son `> a > img`
+  - **"Mis Notas" en dos líneas a 1366px**: `nowrap` en los links. De paso, entre 992 y 1199px el buscador cede espacio (los botones de la derecha ya quedaban cortados)
+  - 72/72 tests, 7 nuevos
+
+- [x] ~~**Flujo de calificar/reseñar rediseñado: dos modales, sin estados ni re-visionados**~~ (2026-09-16)
+  - **Modal de calificar**: solo el número arriba y cinco estrellas clickeables abajo (mitad izquierda = media estrella; 1 a 10 en la escala). Más la fecha. Y el botón de eliminar
+  - **Modal de reseña**, aparte: texto público, spoilers y nota privada. Se abre desde "Tu reseña" en la ficha, desde "Escribir tu reseña" en la sección de reseñas, y desde el menú de cada entrada del diario
+  - Los dos escriben en la **misma fila** y cada uno toca solo sus campos: calificar no borra la reseña, reseñar no toca la nota. Cubierto por test
+  - **Fuera los estados** (viéndola / quiero verla / abandonada): calificar es dar por vista. Fuera el **re-visionado** del sistema entero. Vuelve a ser **una entrada por título** con índice único de verdad — el original nunca lo tuvo, el candado vivía en el controller
+  - Migración: deduplica si hubiera re-visionados guardados (no había), borra `is_rewatch` y `status`, pone el único. Backup de la base antes de correrla
+  - La nota pasó a **entero del 1 al 10** (cinco estrellas con medias). Las notas viejas con .5 quedan como están; al reeditarlas se redondean
+  - El diario perdió el filtro de estado y el tile "Re-vistas" pasó a "Reseñas" (escritas)
+  - `log-modal` y el slider desaparecen; `star-rater.js` nuevo. 39/39 tests, reescritos para el modelo nuevo
+
+- [x] ~~**Diario real: re-visionados + estados + fecha editable**~~ (2026-09-16)
+  - Hecho por `dharma-backend`; lo cortó el límite de sesión mientras agregaba tests extra, pero lo que dejó estaba completo y en verde: migración que quita el índice único, rutas `reviews.edit`/`reviews.update`, modal con selector de estado, fecha editable y aviso de re-visionado. 12 tests nuevos
+  - Verificado por mí: 40/40, migración aplicada, las cinco pantallas renderizan 200
+- [x] ~~**Ficha: botones al sistema Dharma**~~ (2026-09-16)
+  - Fuera el botón verde de "Tu nota" y también "Registrar de nuevo" + el desplegable de registros (pedido directo): una vez registrada, la barra de acciones no muestra nada. La nota vive en el hero con su Editar
+  - "Ver trailer" pasó de `btn-outline-danger` a `.btn-cine-ghost`; el botón de eliminar del modal a `.btn-cine-danger` (alias borrado)
+  - El riel de relacionados ya no muestra lo que está en tu watchlist: se juntan 36, se filtran, se muestran 18
+- [x] ~~**El trailer seguía sonando al cerrar el modal**~~ (2026-09-16)
+  - Ocultar un modal no pausa un iframe de YouTube. Ahora el `src` se pone al abrir y se saca al cerrar — es lo único fiable sin cargar la API de YouTube. De paso la ficha ya no carga YouTube en cada visita
 
 - [x] ~~**Sistema de botones Dharma estandarizado**~~ (2026-09-07)
   - Había dos variantes (`primary`, `secondary`) y todo lo demás caía en botones de Bootstrap, cada uno con su rojo, celeste o verde ajenos a la paleta

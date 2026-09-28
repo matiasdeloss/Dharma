@@ -93,3 +93,13 @@ El patrón de trabajo real en este proyecto es iterativo: el usuario prueba en s
 3. Si tocaste un controller/lógica PHP: `php -l` sobre el archivo y `php artisan test` (21 tests en este proyecto — deberían seguir pasando)
 
 Si el usuario dice que algo "no cambió" o "sigue igual", el primer sospechoso no es "hay que probar en el navegador" — es revisar si el selector CSS que escribiste realmente matchea (errores comunes que ya pasaron acá: anidar mal en SCSS y generar un selector descendiente que nunca matchea, o pisar una regla con menor especificidad de la esperada).
+
+## 8. Texto nítido en cards: nada de capas GPU ni `scale` sobre contenedores con texto
+
+Ya pasó: `.movie-card` tenía `transform: translateZ(0)` + `will-change: transform` y un `scale(1.02)` en hover, y el usuario notó "las letras se sienten borrosas". Promover a capa GPU y escalar rasteriza el texto como bitmap. El hover de una card es `translateY(...)` a secas; el zoom va **solo en la imagen** (`.poster-wrapper img`), que sí puede escalar.
+
+## 9. Meta chica (año, separadores, acciones fantasma): gris neutro, no taupe
+
+`--dharma-text-secondary` es taupe (`#948979`) y sobre superficies oscuras al lado del dorado se lee como "amarillo apagado" — el usuario lo rechazó explícitamente para el año y el botón "Calificar" de las cards. Para meta fría usar `--dharma-text-neutral` (`#9aa3ad`, definido en `_variables.scss`/`_base.scss`). El taupe queda para textos largos donde su calidez suma.
+
+Además, en las cards: la nota de TMDB va blanca y con peso (es lo primero que se lee de la meta), la estrella se alinea con `line-height: 1` + `vertical-align: 0` (los íconos de Bootstrap traen `vertical-align: -.125em` y se hunden), y "Calificar" es fantasma y solo aparece en hover con puntero (`@media (hover: hover)`), mientras que la nota propia se ve siempre.
