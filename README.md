@@ -10,7 +10,7 @@ Diario y plataforma de cine y series. Buscá títulos, puntuá y reseñá lo que
 
 | Detalle de un título | Diario |
 | --- | --- |
-| ![Detalle](docs/screenshots/detalle.png) | ![Diario](docs/screenshots/diario.png) |
+| ![Detalle](docs/screenshots/detalle.png) |
 
 | Estadísticas | Watchlist |
 | --- | --- |
