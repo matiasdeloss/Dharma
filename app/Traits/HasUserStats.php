@@ -8,32 +8,29 @@ use App\Models\Watchlist;
 trait HasUserStats
 {
     /**
-     * Notas, reseñas y watchlist para el bloque de estadísticas del hero.
-     * Sin usuario (demo/guest) devuelve agregados globales en vez de por usuario.
+     * Contadores del encabezado del diario (reviews/partials/diary-stats).
+     *
+     * Los usan ReviewController::index para pintar la banda y, como fragmento
+     * out-of-band, ReviewController::store y WatchlistController::toggle para
+     * mantenerla al dia si el diario esta en pantalla al guardar.
      */
-    protected function getHeroStats(?int $userId): array
+    protected function getDiaryStats(int $userId): array
     {
-        // Sin usuario no hay nada que contar. El hero solo muestra estos numeros
-        // dentro de @auth, asi que devolver ceros ademas ahorra tres COUNT por
-        // visita de invitado.
-        if (! $userId) {
-            return [
-                'total_notes' => 0,
-                'total_reviews' => 0,
-                'total_watchlist' => 0,
-            ];
-        }
+        $mine = Review::where('user_id', $userId);
 
         return [
-            'total_notes' => Review::where('user_id', $userId)
+            'total_logged' => (clone $mine)->count(),
+            'avg_rating' => round((clone $mine)->whereNotNull('rating')->avg('rating') ?? 0, 1),
+
+            'total_notes' => (clone $mine)
                 ->whereNotNull('private_notes')
                 ->where('private_notes', '!=', '')
                 ->count(),
 
             // Antes esto terminaba en `?: Review::where(...)->count()`: con cero
             // resenas escritas caia a contar TODOS los registros del usuario, y
-            // el numero que mostraba el hero no significaba nada.
-            'total_reviews' => Review::where('user_id', $userId)
+            // el numero que mostraba no significaba nada.
+            'total_reviews' => (clone $mine)
                 ->whereNotNull('review_text')
                 ->where('review_text', '!=', '')
                 ->count(),

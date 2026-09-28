@@ -10,12 +10,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'region'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * Región por defecto para streaming (mismo default que la columna, para
+     * que un usuario recién creado en memoria ya la tenga).
+     */
+    protected $attributes = [
+        'region' => 'AR',
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -44,6 +52,33 @@ class User extends Authenticatable
     public function watchlists(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Watchlist::class);
+    }
+
+    /**
+     * Listas propias ("Mi top de Nolan", "Maratón de Halloween").
+     */
+    public function mediaLists(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MediaList::class);
+    }
+
+    /**
+     * Plataformas de streaming elegidas en Ajustes.
+     */
+    public function providers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserProvider::class);
+    }
+
+    /**
+     * Ids de TMDB de las plataformas del usuario, para cruzar con
+     * `watch/providers` de una ficha o con `with_watch_providers` de discover.
+     *
+     * @return int[]
+     */
+    public function providerIds(): array
+    {
+        return $this->providers->pluck('provider_id')->all();
     }
 
     /**

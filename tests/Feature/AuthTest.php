@@ -54,6 +54,64 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_se_frena_despues_de_cinco_intentos_fallidos(): void
+    {
+        // Reloj quieto para que la espera del mensaje sea exacta.
+        $this->freezeTime();
+
+        $user = User::factory()->create([
+            'email' => 'villeneuve@dharma.tv',
+            'password' => Hash::make('correctpassword'),
+        ]);
+
+        foreach (range(1, 5) as $intento) {
+            $this->from(route('login'))->post(route('login'), [
+                'email' => 'villeneuve@dharma.tv',
+                'password' => 'wrongpassword',
+            ])->assertSessionHasErrors('email');
+        }
+
+        // Ni con la contraseña correcta: primero hay que esperar.
+        $this->from(route('login'))->post(route('login'), [
+            'email' => 'villeneuve@dharma.tv',
+            'password' => 'correctpassword',
+        ])->assertSessionHasErrors(['email' => 'Demasiados intentos fallidos. Vuelve a intentarlo en 60 segundos.']);
+        $this->assertGuest();
+
+        // Pasado el minuto vuelve a dejar entrar.
+        $this->travel(61)->seconds();
+
+        $this->post(route('login'), [
+            'email' => 'villeneuve@dharma.tv',
+            'password' => 'correctpassword',
+        ])->assertRedirect(route('home'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_registro_se_frena_despues_de_cinco_cuentas_por_hora_desde_la_misma_ip(): void
+    {
+        foreach (range(1, 5) as $i) {
+            $this->post(route('register'), [
+                'name' => "Cinéfilo {$i}",
+                'email' => "cinefilo{$i}@dharma.tv",
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+            ])->assertSessionHasNoErrors();
+
+            auth()->logout();
+        }
+
+        $this->from(route('register'))->post(route('register'), [
+            'name' => 'Cinéfilo 6',
+            'email' => 'cinefilo6@dharma.tv',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertDatabaseMissing('users', ['email' => 'cinefilo6@dharma.tv']);
+        $this->assertGuest();
+    }
+
     public function test_register_page_renders_successfully(): void
     {
         $response = $this->get(route('register'));
@@ -73,7 +131,8 @@ class AuthTest extends TestCase
             'password_confirmation' => 'password123',
         ]);
 
-        $response->assertRedirect(route('home'));
+        // El alta manda a elegir plataformas, no al inicio.
+        $response->assertRedirect(route('settings.edit', ['bienvenida' => 1]));
 
         $this->assertDatabaseHas('users', [
             'name' => 'Scorsese Fan',

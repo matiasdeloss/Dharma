@@ -5,15 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\MediaItem;
 use App\Models\Review;
 use App\Models\Watchlist;
+use App\Services\MediaCatalog;
 use App\Services\OmdbService;
 use App\Services\TmdbService;
-use App\Traits\HasUserStats;
+use App\Traits\AttachesUserStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MediaController extends Controller
 {
-    use HasUserStats;
+    use AttachesUserStatus;
+
 
     // Imagen fija para el fondo del hero del home (no rota al azar, a diferencia
     // del backdrop de /login y /register).
@@ -23,8 +25,11 @@ class MediaController extends Controller
 
     protected OmdbService $omdb;
 
-    public function __construct(TmdbService $tmdb, OmdbService $omdb)
+    protected MediaCatalog $catalog;
+
+    public function __construct(TmdbService $tmdb, OmdbService $omdb, MediaCatalog $catalog)
     {
+        $this->catalog = $catalog;
         $this->tmdb = $tmdb;
         $this->omdb = $omdb;
     }
@@ -46,21 +51,19 @@ class MediaController extends Controller
 
         $userId = Auth::id();
 
-        $stats = $this->getHeroStats(Auth::id());
-
         $user = Auth::user();
 
         // 1. Selecciones Populares (Tendencias globales combinadas)
         $popularPicksRaw = $this->tmdb->getTrending('all', 'week');
-        $popularPicks = $this->attachWatchlistStatus(array_slice($popularPicksRaw['results'] ?? [], 0, 15), $userId);
+        $popularPicks = $this->attachUserStatus(array_slice($popularPicksRaw['results'] ?? [], 0, 15), $userId);
 
         // 2. Mejores 10 Películas de la Semana (Ranking de popularidad)
         $trendingMoviesRaw = $this->tmdb->getTrending('movie', 'week');
-        $topMovies = $this->attachWatchlistStatus(array_slice($trendingMoviesRaw['results'] ?? [], 0, 10), $userId, 'movie');
+        $topMovies = $this->attachUserStatus(array_slice($trendingMoviesRaw['results'] ?? [], 0, 10), $userId, 'movie');
 
         // 3. Mejores 10 Series de la Semana (Ranking de popularidad)
         $trendingTvRaw = $this->tmdb->getTrending('tv', 'week');
-        $topTv = $this->attachWatchlistStatus(array_slice($trendingTvRaw['results'] ?? [], 0, 10), $userId, 'tv');
+        $topTv = $this->attachUserStatus(array_slice($trendingTvRaw['results'] ?? [], 0, 10), $userId, 'tv');
 
         return view('home', [
             'popularPicks' => $popularPicks,
@@ -69,7 +72,6 @@ class MediaController extends Controller
             'trending' => $topMovies, // Alias de compatibilidad
             'popularTv' => $topTv, // Alias de compatibilidad
             'recentReviews' => $recentReviews,
-            'stats' => $stats,
             'user' => $user,
             'isConfigured' => $this->tmdb->isConfigured(),
             'heroBackdrop' => [
@@ -101,7 +103,7 @@ class MediaController extends Controller
         });
 
         $userId = Auth::id();
-        $results = $this->attachWatchlistStatus($results, $userId);
+        $results = $this->attachUserStatus($results, $userId);
 
         // If request comes from HTMX live search input
         if ($request->header('HX-Request') && $request->input('dropdown') == '1') {
@@ -140,53 +142,50 @@ class MediaController extends Controller
         // Get currently logged-in user (or default demo user if unauthenticated for testing)
         $userId = Auth::id();
 
-        // Un título puede tener N entradas del mismo usuario (re-visionados):
-        // la ficha trabaja con la lista completa y elige cuál mostrar.
-        $userEntries = collect();
-        $userReview = null;   // la entrada más reciente: "Tu reseña"
-        $userScore = null;    // la entrada calificada más reciente: "Tu nota"
+        $userReview = null;
         $inWatchlist = false;
 
         if ($userId && $mediaItem) {
-            $userEntries = Review::entriesFor($userId, $mediaItem->id)->get();
-
-            $userReview = $userEntries->first();
-
-            // Un re-visionado sin nota no borra la nota que ya habías puesto.
-            $userScore = $userEntries->first(fn ($entry) => $entry->rating !== null)
-                ?? $userReview;
+            $userReview = Review::of($userId, $mediaItem->id)->first();
 
             $inWatchlist = Watchlist::where('user_id', $userId)
                 ->where('media_item_id', $mediaItem->id)
                 ->exists();
         }
 
-        // Reseñas de la comunidad: una sola por usuario (la última que tenga
-        // texto). Sin deduplicar, quien registra tres visionados aparecía tres
-        // veces seguidas en la lista.
+        // Reseñas de la comunidad: las que tienen texto, más nuevas primero.
         $communityReviews = $mediaItem
-            ? Review::latestPerUser($mediaItem->id, fn ($q) => $q->whereNotNull('review_text')->where('review_text', '!=', ''))
+            ? Review::where('media_item_id', $mediaItem->id)
+                ->whereNotNull('review_text')
+                ->where('review_text', '!=', '')
                 ->with('user')
                 ->latest()
                 ->take(10)
                 ->get()
             : collect();
 
-        // Streaming Watch Providers (JustWatch / TMDB)
-        $watchProviders = $this->tmdb->extractWatchProviders($details, 'AR');
+        // Streaming en la region del usuario (AR para invitados). Las
+        // plataformas propias se listan primero y marcadas.
+        $region = Auth::user()?->region ?? 'AR';
+        $myProviders = Auth::user()?->providerIds() ?? [];
+        $watchProviders = $this->tmdb->extractWatchProviders($details, $region);
+
+        // La ficha ya trae `watch/providers`: se aprovecha para dejar al dia
+        // la disponibilidad del titulo si esta en nuestra base.
+        if ($mediaItem) {
+            $this->catalog->syncAvailability($mediaItem, $region, $details);
+        }
 
         // External IDs and Multi-Source Critic Ratings (IMDb, Rotten Tomatoes, Metacritic)
         $imdbId = $details['imdb_id'] ?? $details['external_ids']['imdb_id'] ?? null;
         $omdbRatings = $this->omdb->getRatings($imdbId);
 
-        // Dharma Community Rating. También una fila por usuario: si no, quien
-        // vio algo cinco veces pesaba cinco veces en el promedio "de todos".
+        // Nota promedio de la comunidad de Dharma.
         $dharmaAvg = null;
         $dharmaCount = 0;
 
         if ($mediaItem) {
-            $dharmaRatings = Review::latestPerUser($mediaItem->id, fn ($q) => $q->whereNotNull('rating'));
-
+            $dharmaRatings = Review::where('media_item_id', $mediaItem->id)->whereNotNull('rating');
             $dharmaAvg = (clone $dharmaRatings)->avg('rating');
             $dharmaCount = (clone $dharmaRatings)->count();
         }
@@ -219,12 +218,22 @@ class MediaController extends Controller
             $relatedSeen[$itemId] = true;
             $related[] = $item;
 
-            if (count($related) >= 18) {
+            // Se juntan mas de los que se muestran porque despues se filtran
+            // los que ya estan en la watchlist.
+            if (count($related) >= 36) {
                 break;
             }
         }
 
-        $related = $this->attachWatchlistStatus($related, $userId);
+        $related = $this->attachUserStatus($related, $userId);
+
+        // Lo que ya esta en la watchlist no es una recomendacion: ya lo
+        // encontraste. Se saca del riel en vez de marcarlo.
+        $related = array_slice(
+            array_values(array_filter($related, fn ($item) => empty($item['in_watchlist']))),
+            0,
+            18
+        );
 
         return view('media.show', [
             'media' => $details,
@@ -232,48 +241,14 @@ class MediaController extends Controller
             'related' => $related,
             'mediaItem' => $mediaItem,
             'userReview' => $userReview,
-            'userScore' => $userScore,
-            'userEntries' => $userEntries,
             'inWatchlist' => $inWatchlist,
             'communityReviews' => $communityReviews,
             'watchProviders' => $watchProviders,
+            'myProviders' => $myProviders,
             'imdbId' => $imdbId,
             'omdbRatings' => $omdbRatings,
             'dharmaAvg' => $dharmaAvg,
             'dharmaCount' => $dharmaCount,
         ]);
-    }
-
-    /**
-     * Attach user's in_watchlist status to a list of media items
-     */
-    protected function attachWatchlistStatus(array $items, ?int $userId, string $defaultType = 'movie'): array
-    {
-        if (empty($items)) {
-            return $items;
-        }
-
-        $watchlistLookup = [];
-        $watchlistIds = [];
-
-        if ($userId) {
-            $userWatchlist = Watchlist::where('user_id', $userId)
-                ->join('media_items', 'watchlists.media_item_id', '=', 'media_items.id')
-                ->select('media_items.tmdb_id', 'media_items.media_type')
-                ->get();
-
-            foreach ($userWatchlist as $w) {
-                $watchlistLookup["{$w->media_type}_{$w->tmdb_id}"] = true;
-                $watchlistIds[$w->tmdb_id] = true;
-            }
-        }
-
-        foreach ($items as &$item) {
-            $id = $item['id'] ?? $item['tmdb_id'] ?? 0;
-            $type = $item['media_type'] ?? $defaultType;
-            $item['in_watchlist'] = isset($watchlistLookup["{$type}_{$id}"]) || isset($watchlistIds[$id]);
-        }
-
-        return $items;
     }
 }
