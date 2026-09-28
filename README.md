@@ -67,3 +67,7 @@ php artisan test
 - `resources/js/modules`: módulos JS vanilla (toasts, slider, rater, etc.).
 
 Este producto usa la API de TMDB pero no está avalado ni certificado por TMDB.
+
+## Licencia
+
+MIT. Ver [LICENSE](LICENSE).
