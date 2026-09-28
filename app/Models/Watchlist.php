@@ -13,7 +13,6 @@ class Watchlist extends Model
     protected $fillable = [
         'user_id',
         'media_item_id',
-        'priority',
         'notes',
     ];
 

@@ -18,6 +18,9 @@ $color-accent-sage-hover: #596455;
 $color-accent-taupe: #948979;
 $color-accent-gold: #d4af37;
 $color-accent-gold-hover: #bfa02f;
+// Dorado brillante para enfasis sobre fondos oscuros o con fotograma: el
+// #d4af37 de la paleta es apagado a proposito y ahi se hunde.
+$color-accent-gold-bright: #f2c94c;
 $color-accent-info: #67b0d1;
 $color-accent-purple: #b993d6;
 $color-accent-danger: #e06c75;
@@ -26,6 +29,10 @@ $color-accent-danger: #e06c75;
 $color-text-main: #f8fafc;
 $color-text-secondary: #948979;
 $color-text-muted: #796e5f;
+// Gris neutro (sin el tinte taupe del secundario) para meta fria: fechas,
+// separadores, acciones fantasma. El taupe sobre superficies oscuras se lee
+// como amarillo apagado y pelea con el dorado del acento.
+$color-text-neutral: #9aa3ad;
 $color-text-dim: #5c5346;
 
 // Borders
@@ -52,3 +59,23 @@ $transition-normal: 0.25s ease;
 $font-family-body: 'Plus Jakarta Sans', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 $font-family-headings: 'Outfit', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 $font-family-sans: $font-family-body;
+
+// --------------------------------------------------------------------------
+// Cifras destacadas (contadores, ratings, estadisticas)
+// --------------------------------------------------------------------------
+// Antes iban en Outfit 800: un extrabold geometrico en tamano grande se lee
+// como poster infantil, no como dato. La version seria es al reves — peso
+// medio y tamano mayor, que es lo que hacen Letterboxd e IMDb.
+//
+// `tabular-nums` es lo que evita que las cifras bailen: con figuras
+// proporcionales un "11" es mas angosto que un "88", y en una fila de
+// contadores que se actualizan en vivo por HTMX el layout se mueve solo.
+@mixin numeral($size, $weight: 500) {
+    font-family: $font-family-headings;
+    font-size: $size;
+    font-weight: $weight;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}

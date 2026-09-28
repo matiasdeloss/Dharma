@@ -19,12 +19,26 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-cine sticky-top">
+    {{-- Paginas que arrancan con un fotograma a sangre completa: el hero del
+         home o la banda de encabezado de <x-page-header>. En ellas el navbar va
+         transparente mientras estamos arriba de todo (`navbar-over-hero`, se
+         vuelve solido al scrollear: ver modules/navbar.js) y <main> va sin
+         padding. Las dos cosas salen de esta misma lista: cuando eran dos
+         listas separadas, Explorar, Estadisticas y Ajustes quedaron solo en
+         una, la banda arrancaba 24px mas abajo y el navbar quedaba a medio
+         camino entre el fondo y la imagen. --}}
+    @php
+        $fullBleed = request()->routeIs('home', 'reviews.index', 'reviews.stats', 'watchlist.index', 'explore.index', 'settings.edit', 'lists.index', 'lists.show');
+    @endphp
+    <nav class="navbar navbar-expand-lg navbar-cine sticky-top {{ $fullBleed ? 'navbar-over-hero' : '' }}">
         <div class="container">
             <!-- Brand -->
+            {{-- Marca grande y links chicos en mayusculas (estilo Letterboxd):
+                 la jerarquia la da el tamano, ver .navbar-brand / .nav-link en
+                 components/_navbar.scss. --}}
             <a class="navbar-brand text-white" href="{{ route('home') }}">
-                <i class="bi bi-film text-accent fs-4"></i>
-                <span class="fw-bold tracking-tight">Dharma</span>
+                <i class="bi bi-film text-accent"></i>
+                <span>Dharma</span>
             </a>
 
             <!-- Mobile Toggle -->
@@ -38,19 +52,32 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home') ? 'active text-accent fw-semibold' : 'text-light-emphasis' }}" href="{{ route('home') }}">
-                            <i class="bi bi-compass me-1"></i> Explorar
+                            Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('explore.index') ? 'active text-accent fw-semibold' : 'text-light-emphasis' }}" href="{{ route('explore.index') }}">
+                            Explorar
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('reviews.index') ? 'active text-accent fw-semibold' : 'text-light-emphasis' }}" href="{{ route('reviews.index') }}">
-                            <i class="bi bi-journal-bookmark me-1"></i> Mi Diario & Notas
+                            Mis Notas
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('watchlist.index') ? 'active text-accent fw-semibold' : 'text-light-emphasis' }}" href="{{ route('watchlist.index') }}">
-                            <i class="bi bi-bookmark-heart me-1"></i> Watchlist
+                            Watchlist
                         </a>
                     </li>
+                    {{-- Solo con sesión: las listas son personales y no hay nada que mostrarle a un invitado. --}}
+                    @auth
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('lists.*') ? 'active text-accent fw-semibold' : 'text-light-emphasis' }}" href="{{ route('lists.index') }}">
+                                Listas
+                            </a>
+                        </li>
+                    @endauth
                 </ul>
 
                 <!-- Live Search Bar with HTMX -->
@@ -103,12 +130,27 @@
                                 </li>
                                 <li>
                                     <a class="dropdown-item py-2" href="{{ route('reviews.index') }}">
-                                        <i class="bi bi-journal-text me-2 text-success"></i> Mi Diario & Notas
+                                        <i class="bi bi-journal-text me-2 text-success"></i> Mis Notas
                                     </a>
                                 </li>
                                 <li>
                                     <a class="dropdown-item py-2" href="{{ route('watchlist.index') }}">
                                         <i class="bi bi-bookmark-heart me-2 text-info"></i> Mi Watchlist
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{{ route('lists.index') }}">
+                                        <i class="bi bi-collection me-2 text-purple"></i> Mis listas
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{{ route('reviews.stats') }}">
+                                        <i class="bi bi-bar-chart-line me-2 text-warning"></i> Estadísticas
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{{ route('settings.edit') }}">
+                                        <i class="bi bi-tv me-2 text-accent"></i> Plataformas y región
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider border-secondary opacity-25"></li>
@@ -187,26 +229,50 @@
     </div>
 
     <!-- Main Content -->
-    <main class="{{ request()->routeIs('login', 'register', 'media.show') ? 'p-0 m-0' : 'py-4' }}">
+    {{-- Las vistas que arrancan con un fotograma a sangre completa manejan su
+         propio espaciado: cualquier padding aca dejaria una franja entre el
+         navbar y la imagen (ver $fullBleed arriba). --}}
+    <main class="{{ $fullBleed || request()->routeIs('login', 'register', 'media.show') ? 'p-0 m-0' : 'py-4' }}">
         @yield('content')
     </main>
 
     <!-- Modal Container for HTMX Quick Log / Notes -->
     <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered rate-modal-dialog">
             <div class="modal-content modal-content-dharma" id="logModalContent">
-                <!-- HTMX will load the form here -->
-                <div class="p-5 text-center">
+                {{-- HTMX reemplaza esto con el formulario --}}
+                <div class="modal-loading">
                     <div class="spinner-border text-accent" role="status">
                         <span class="visually-hidden">Cargando...</span>
                     </div>
+                    <span>Cargando</span>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- Panel lateral de una persona del reparto. El contenido lo trae HTMX
+         (PersonController::show); al cerrarlo se limpia para que la proxima
+         apertura muestre el spinner y no la persona anterior (ver modules/person-panel.js). --}}
+    <div class="offcanvas offcanvas-end person-panel" tabindex="-1" id="personPanel" aria-labelledby="personPanelLabel">
+        <div class="person-panel-top">
+            <span class="person-panel-eyebrow" id="personPanelLabel">Reparto</span>
+            <button type="button" class="modal-close-dharma person-panel-close" data-bs-dismiss="offcanvas" aria-label="Cerrar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="offcanvas-body person-panel-body" id="personPanelContent">
+            <div class="modal-loading">
+                <div class="spinner-border text-accent" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <span>Cargando</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="mt-auto py-5 border-top border-secondary-subtle bg-dark text-secondary">
+    <footer class="site-footer mt-auto py-5">
         <div class="container text-center">
             <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
                 <i class="bi bi-film text-accent"></i>

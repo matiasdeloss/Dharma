@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Una entrada del diario: una fila por usuario y título.
+ *
+ * Calificar es dar por vista. No hay estados de visionado ni re-visionados: la
+ * nota, la fecha y la reseña son de "la vez que la viste", y si la ves de
+ * nuevo se edita la misma entrada.
+ */
 class Review extends Model
 {
     use HasFactory;
@@ -17,15 +24,12 @@ class Review extends Model
         'review_text',
         'private_notes',
         'watched_date',
-        'is_rewatch',
         'contains_spoilers',
-        'status',
     ];
 
     protected $casts = [
         'watched_date' => 'date',
         'rating' => 'float',
-        'is_rewatch' => 'boolean',
         'contains_spoilers' => 'boolean',
     ];
 
@@ -46,30 +50,20 @@ class Review extends Model
     }
 
     /**
+     * La entrada de un usuario sobre un título (hay como mucho una).
+     */
+    public function scopeOf($query, int $userId, int $mediaItemId)
+    {
+        return $query
+            ->where('user_id', $userId)
+            ->where('media_item_id', $mediaItemId);
+    }
+
+    /**
      * Get equivalent 5-star score (e.g. 10 -> 5.0, 8 -> 4.0)
      */
     public function getStarRatingAttribute(): ?float
     {
         return $this->rating !== null ? round($this->rating / 2, 1) : null;
-    }
-
-    /**
-     * Friendly rating label
-     */
-    public function getRatingLabelAttribute(): ?string
-    {
-        if ($this->rating === null) return null;
-
-        return match (true) {
-            $this->rating >= 9.5 => 'Obra Maestra',
-            $this->rating >= 8.5 => 'Excelente',
-            $this->rating >= 7.5 => 'Muy Buena',
-            $this->rating >= 6.5 => 'Buena',
-            $this->rating >= 5.5 => 'Interesante / Pasable',
-            $this->rating >= 4.5 => 'Regular',
-            $this->rating >= 3.5 => 'Floja / Mediocre',
-            $this->rating >= 2.0 => 'Mala',
-            default => 'Pésima',
-        };
     }
 }

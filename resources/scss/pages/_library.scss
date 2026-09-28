@@ -1,0 +1,585 @@
+@use '../base/variables' as *;
+@use '../components/modals';
+
+// ==========================================================================
+// Vistas de biblioteca personal: Diario y Watchlist
+// ==========================================================================
+// Estas dos pantallas venian con utilidades crudas de Bootstrap
+// (`bg-dark border-secondary`, `text-success`, `form-select` pelado), que usan
+// la paleta generica del framework y no la de Dharma. Este archivo las trae al
+// mismo lenguaje visual que el home: superficies --dharma-*, acento dorado,
+// vidrio sobre fotograma y foco dorado en los controles.
+
+// --------------------------------------------------------------------------
+// Banda de encabezado con fotograma (componente x-page-header)
+// --------------------------------------------------------------------------
+// Mismo patron que .hero-home-banner pero compacto: la imagen es ambiente, no
+// protagonista, asi que el degrade la tapa mas y la banda es mucho mas baja.
+.page-header-band {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background-color: var(--dharma-bg);
+    padding: 2.25rem 0 2.5rem;
+    margin-bottom: 2.5rem;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background-image: var(--page-header-backdrop, none);
+        background-size: cover;
+        background-position: center 30%;
+        filter: saturate(0.7) brightness(0.5);
+        transform: scale(1.04);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+            // Fundido al fondo real de la pagina: sin esto se ve la costura
+            // donde termina la banda y arranca el contenido.
+            linear-gradient(to bottom, transparent 30%, rgba(34, 40, 49, 0.8) 78%, var(--dharma-bg) 100%),
+            // Scrim superior para los links del navbar transparente.
+            linear-gradient(to bottom, rgba(12, 15, 19, 0.82) 0%, rgba(12, 15, 19, 0.4) 14%, transparent 30%),
+            // Lateral izquierdo, para que el titulo se lea sobre cualquier foto.
+            // Se abre mas hacia la derecha que antes: ahora que las estadisticas
+            // bajaron a la izquierda, ese lado quedo libre para mostrar imagen.
+            linear-gradient(100deg, rgba(20, 24, 31, 0.93) 0%, rgba(20, 24, 31, 0.78) 40%, rgba(20, 24, 31, 0.3) 100%);
+    }
+
+    // De lg en adelante se mete por debajo del navbar sticky, igual que el hero.
+    @media (min-width: 992px) {
+        margin-top: calc(-1 * var(--navbar-h, 68px));
+        padding-top: calc(var(--navbar-h, 68px) + 2.25rem);
+        padding-bottom: 3rem;
+    }
+}
+
+// Siempre en columna. Antes en lg pasaba a fila y mandaba las estadisticas a la
+// derecha, sobre la parte mas clara del fotograma: ahi necesitaban una caja
+// propia para tener contraste, y esa caja es justo lo que el usuario rechazo en
+// el hero del home. Apiladas debajo del titulo caen en la zona que el degrade
+// ya oscurece y no necesitan superficie.
+.page-header-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+}
+
+.page-header-copy {
+    min-width: 0;
+}
+
+.page-header-title {
+    font-family: $font-family-headings;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--dharma-text-main);
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.page-header-icon {
+    color: var(--dharma-accent);
+    font-size: 0.9em;
+}
+
+.page-header-subtitle {
+    color: var(--dharma-cream);
+    opacity: 0.82;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+
+// Misma linea fina que separa los contadores del hero de los botones.
+.page-header-aside {
+    width: 100%;
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+// --------------------------------------------------------------------------
+// Estadisticas del encabezado
+// --------------------------------------------------------------------------
+// Sin cajas: los numeros se apoyan directo sobre el fotograma, igual que en el
+// hero del home. El separador es un borde del propio tile en vez de un div
+// divisor, asi el markup de las vistas no cambia.
+.stat-tile-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    @media (min-width: 768px) {
+        gap: 1.5rem;
+    }
+}
+
+.stat-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+
+    & + .stat-tile {
+        padding-left: 1rem;
+        border-left: 1px solid rgba(255, 255, 255, 0.14);
+
+        @media (min-width: 768px) {
+            padding-left: 1.5rem;
+        }
+    }
+}
+
+.stat-tile-value {
+    @include numeral(1.95rem, 600);
+    color: var(--dharma-cream);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+}
+
+.stat-tile-label {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--dharma-text-secondary);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
+// --------------------------------------------------------------------------
+// Barra de filtros
+// --------------------------------------------------------------------------
+.filter-bar {
+    background-color: var(--dharma-elevated);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-lg;
+    padding: 1rem;
+}
+
+// Select con la misma superficie y foco dorado que los controles del modal.
+// Hereda de .modal-form-control (regla del proyecto: nunca dejar un control
+// nativo con el estilo default de Bootstrap) y le suma la flecha propia, que
+// se pierde al sacar `appearance`.
+.dharma-select {
+    @extend .modal-form-control;
+
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23948979'%3E%3Cpath d='M8 11.5 3.5 7l1-1L8 9.5 11.5 6l1 1z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 14px 14px;
+
+    // El menu desplegado lo pinta el sistema operativo: sin esto queda blanco
+    // en Windows y contrasta feo con el resto de la interfaz.
+    option {
+        background-color: #1f252e;
+        color: var(--dharma-text-main);
+    }
+}
+
+// Buscador del diario: la superficie de los controles del proyecto
+// (.modal-form-control) con la lupa adentro.
+.dharma-search {
+    position: relative;
+
+    > .bi {
+        position: absolute;
+        top: 50%;
+        left: 0.95rem;
+        transform: translateY(-50%);
+        font-size: 0.9rem;
+        color: var(--dharma-text-neutral);
+        pointer-events: none;
+    }
+}
+
+.dharma-search-input {
+    padding-left: 2.5rem;
+}
+
+// --------------------------------------------------------------------------
+// Entradas del diario
+// --------------------------------------------------------------------------
+.diary-entry {
+    background-color: var(--dharma-elevated);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-lg;
+    padding: 1.15rem;
+    transition: border-color $transition-normal,
+                transform $transition-normal,
+                box-shadow $transition-normal;
+
+    &:hover {
+        border-color: rgba(212, 175, 55, 0.38);
+        transform: translateY(-2px);
+        box-shadow: $shadow-card;
+    }
+}
+
+.diary-rating {
+    text-align: right;
+    line-height: 1.1;
+}
+
+.diary-rating-value {
+    @include numeral(1.65rem, 600);
+    color: var(--dharma-accent);
+
+    .diary-rating-max {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--dharma-text-secondary);
+    }
+}
+
+.diary-rating-stars {
+    font-size: 0.75rem;
+    color: var(--dharma-cream);
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.diary-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--dharma-text-secondary);
+}
+
+.diary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: $radius-pill;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--dharma-border);
+    color: var(--dharma-text-secondary);
+
+    &.diary-chip-rewatch {
+        background-color: rgba(185, 147, 214, 0.14);
+        border-color: rgba(185, 147, 214, 0.35);
+        color: $color-accent-purple;
+    }
+}
+
+.diary-review-text {
+    color: var(--dharma-text-main);
+    opacity: 0.88;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+// La nota privada es el corazon del producto ("guarda tus momentos y citas
+// favoritas"), asi que lleva el acento dorado y una barra lateral que la
+// separa de la resena publica de un vistazo.
+.diary-private-note {
+    background-color: rgba(212, 175, 55, 0.07);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-left: 3px solid var(--dharma-accent);
+    border-radius: $radius-sm;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    color: var(--dharma-cream);
+    line-height: 1.55;
+}
+
+.diary-private-note-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dharma-accent);
+    margin-bottom: 0.35rem;
+}
+
+// Boton de menu contextual (los tres puntos) de cada entrada.
+.diary-action-btn {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: $radius-sm;
+    color: var(--dharma-text-secondary);
+    padding: 0.25rem 0.5rem;
+    line-height: 1;
+    transition: background-color $transition-fast, color $transition-fast, border-color $transition-fast;
+
+    &:hover,
+    &:focus,
+    &.show {
+        background-color: var(--dharma-surface);
+        border-color: var(--dharma-border);
+        color: var(--dharma-text-main);
+    }
+}
+
+// --------------------------------------------------------------------------
+// Estado vacio
+// --------------------------------------------------------------------------
+.empty-state {
+    text-align: center;
+    padding: 4rem 1.5rem;
+    background-color: var(--dharma-elevated);
+    border: 1px dashed var(--dharma-border);
+    border-radius: $radius-lg;
+}
+
+.empty-state-icon {
+    display: block;
+    font-size: 2.5rem;
+    color: var(--dharma-accent);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.empty-state-title {
+    font-family: $font-family-headings;
+    font-weight: 700;
+    color: var(--dharma-text-main);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-text {
+    color: var(--dharma-text-secondary);
+    font-size: 0.9rem;
+    max-width: 32rem;
+    margin: 0 auto 1.75rem;
+}
+
+// --------------------------------------------------------------------------
+// Paginacion
+// --------------------------------------------------------------------------
+// Bootstrap la deja azul sobre blanco. Aparece en diario, watchlist y busqueda,
+// asi que vive aca y no en una vista puntual.
+.pagination {
+    --bs-pagination-bg: var(--dharma-elevated);
+    --bs-pagination-border-color: var(--dharma-border);
+    --bs-pagination-color: var(--dharma-text-secondary);
+
+    --bs-pagination-hover-bg: var(--dharma-surface);
+    --bs-pagination-hover-border-color: var(--dharma-border);
+    --bs-pagination-hover-color: var(--dharma-text-main);
+
+    --bs-pagination-focus-bg: var(--dharma-surface);
+    --bs-pagination-focus-color: var(--dharma-text-main);
+    --bs-pagination-focus-box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+
+    --bs-pagination-active-bg: var(--dharma-accent);
+    --bs-pagination-active-border-color: var(--dharma-accent);
+    --bs-pagination-active-color: #1a1f26;
+
+    --bs-pagination-disabled-bg: var(--dharma-bg);
+    --bs-pagination-disabled-border-color: var(--dharma-border);
+    --bs-pagination-disabled-color: var(--dharma-text-muted);
+
+    --bs-pagination-border-radius: #{$radius-sm};
+
+    .page-link {
+        font-weight: 600;
+        transition: background-color $transition-fast, color $transition-fast;
+    }
+}
+
+// --------------------------------------------------------------------------
+// Guarda de spoilers
+// --------------------------------------------------------------------------
+// El texto queda desenfocado y sin poder seleccionarse hasta que el lector
+// toca el boton. `user-select: none` importa: sin eso el spoiler se lee igual
+// arrastrando el cursor sobre el borroso y copiandolo.
+.spoiler-guard {
+    position: relative;
+}
+
+.spoiler-guard-text {
+    filter: blur(5px);
+    user-select: none;
+    pointer-events: none;
+    transition: filter $transition-normal;
+}
+
+.spoiler-reveal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0;
+    background-color: transparent;
+    border: 0;
+    color: var(--dharma-cream);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: color $transition-fast;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--dharma-accent);
+    }
+}
+
+.spoiler-guard.is-revealed {
+    .spoiler-guard-text {
+        filter: none;
+        user-select: auto;
+        pointer-events: auto;
+    }
+
+    .spoiler-reveal {
+        display: none;
+    }
+}
+
+// --------------------------------------------------------------------------
+// Disponibilidad en mis plataformas (watchlist)
+// --------------------------------------------------------------------------
+// Fila de logos chicos debajo del titulo: solo las plataformas del usuario
+// donde el titulo se ve hoy por suscripcion. Sin plataformas no se pinta nada.
+.wl-availability {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+}
+
+.wl-availability-logo {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    background-color: var(--dharma-surface);
+}
+
+.wl-availability-label {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--dharma-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+// Toggle del filtro "solo lo que puedo ver hoy": pill con estado.
+// Poster del modal "Elegir al azar" cuando la columna del fotograma no se
+// ve (bajo lg). En lg en adelante lo oculta `d-lg-none`.
+.random-pick-poster {
+    display: block;
+    width: 120px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: $radius-md;
+    box-shadow: $shadow-card;
+    margin-bottom: 1rem;
+}
+
+.wl-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: $radius-pill;
+    border: 1px solid var(--dharma-border);
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--dharma-text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color $transition-fast, color $transition-fast, background-color $transition-fast;
+
+    &:hover {
+        color: var(--dharma-text-main);
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    &.is-on {
+        color: var(--dharma-accent);
+        border-color: rgba(212, 175, 55, 0.45);
+        background-color: rgba(212, 175, 55, 0.1);
+    }
+}
+
+.wl-filter-count {
+    padding: 0.05rem 0.45rem;
+    border-radius: $radius-pill;
+    background-color: rgba(255, 255, 255, 0.08);
+    font-size: 0.7rem;
+}
+
+// --------------------------------------------------------------------------
+// Nota de la watchlist
+// --------------------------------------------------------------------------
+// Un boton chico debajo del titulo que abre el dropdown con el textarea. Con
+// nota guardada se pinta dorado y el icono pasa a la version rellena.
+.watchlist-meta {
+    margin-top: 0.5rem;
+}
+
+.wl-note-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: $radius-pill;
+    border: 1px solid var(--dharma-border);
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--dharma-text-secondary);
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color $transition-fast, color $transition-fast;
+
+    &:hover,
+    &:focus-visible,
+    &.show {
+        border-color: rgba(255, 255, 255, 0.25);
+        color: var(--dharma-text-main);
+    }
+
+    &.has-note {
+        color: var(--dharma-accent);
+        border-color: rgba(212, 175, 55, 0.32);
+    }
+}
+
+.wl-edit-menu {
+    width: 260px;
+    padding: 1rem;
+    background-color: var(--dharma-elevated);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-md;
+}
+
+.wl-note {
+    margin: 0.4rem 0 0;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--dharma-text-secondary);
+    font-style: italic;
+}

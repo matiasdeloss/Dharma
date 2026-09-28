@@ -1,30 +1,54 @@
+@use '../base/variables' as *;
+
 // ==========================================================================
 // Cards & Poster Components (Clean Borderless Cinema Style)
 // ==========================================================================
 
+// Superficie ELEVADA respecto del fondo (en dark UI lo que esta arriba es mas
+// claro, no mas oscuro) + borde de 1px sutil para despegarla sin sombra pesada.
 .movie-card {
-    background-color: #1a1f26;
-    border: none;
+    background-color: var(--dharma-elevated);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     outline: none;
     border-radius: 10px;
     overflow: hidden;
     isolation: isolate;
-    transform: translateZ(0);
-    will-change: transform, box-shadow;
+    margin: 0 0.1rem;
+    // Sin translateZ/will-change/scale sobre la card: promoverla a capa GPU y
+    // escalarla rasteriza el texto y lo deja borroso. El zoom en hover es
+    // solo de la imagen (.poster-wrapper > a > img).
     transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-                box-shadow 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+                box-shadow 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color $transition-fast;
     position: relative;
     height: 100%;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 
     &:hover {
-        transform: translateY(-6px) scale(1.02);
+        transform: translateY(-5px);
         z-index: 10;
-        // Alcance reducido a propósito: en el carrusel horizontal, la card de un
-        // extremo siempre puede caer justo en el borde del scroll (overflow-x la
-        // recorta ahí). Una sombra más angosta minimiza ese corte sin eliminar
-        // la profundidad del hover.
+        border-color: rgba(255, 255, 255, 0.12);
         box-shadow: 0 10px 18px rgba(0, 0, 0, 0.4);
+    }
+}
+
+// Logos chicos de las plataformas del usuario, abajo a la izquierda del
+// poster. Solo aparecen cuando el item trae `my_providers`.
+.movie-card-providers {
+    position: absolute;
+    left: 0.4rem;
+    bottom: 0.4rem;
+    z-index: 2;
+    display: flex;
+    gap: 0.25rem;
+
+    img {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        object-fit: cover;
+        border: 1px solid rgba(212, 175, 55, 0.6);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
     }
 }
 
@@ -38,7 +62,11 @@
     isolation: isolate;
     transform: translateZ(0);
 
-    img {
+    // Solo el poster (la imagen del link), no cualquier `img`: los logos de
+    // `.movie-card-providers` también viven acá adentro, y con un `img` a
+    // secas esta regla les ganaba (va después, misma especificidad) y se
+    // veían de 92px tapando medio poster, y encima con el zoom del hover.
+    > a > img {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -49,18 +77,73 @@
     }
 }
 
-.movie-card:hover .poster-wrapper img {
+.movie-card:hover .poster-wrapper > a > img {
     transform: scale(1.05);
 }
 
 .movie-card-info {
-    background-color: #1a1f26;
-    border: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.55rem 0.65rem 0.7rem;
+    flex-grow: 1;
+}
+
+// Meta: nota TMDB y año en tono secundario (es contexto, no protagonista);
+// la accion a la derecha.
+.movie-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.6rem;
+    line-height: 1;
+    font-size: 0.78rem;
+    color: var(--dharma-text-neutral);
+}
+
+// La nota de TMDB es lo primero que se lee de la meta: blanca, mas grande y
+// con la estrella dorada centrada con el numero (line-height 1 en ambos; el
+// icono de Bootstrap trae un vertical-align propio que la hundia).
+.movie-card-tmdb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    @include numeral(0.95rem, 700);
+    color: var(--dharma-text-main);
+
+    i {
+        font-size: 0.8rem;
+        line-height: 1;
+        vertical-align: 0;
+        color: var(--dharma-accent);
+    }
+}
+
+.movie-card-year {
+    font-weight: 500;
+}
+
+.movie-card-sep {
+    opacity: 0.45;
+}
+
+.movie-card-title {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--dharma-text-main);
+    text-decoration: none;
+    transition: color $transition-fast;
+
+    &:hover {
+        color: var(--dharma-cream);
+    }
 }
 
 .ribbon-btn {
-    width: 36px;
-    height: 43px;
+    width: 40px;
+    height: 45px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -84,6 +167,7 @@
     }
 
     i {
+        font-size: 1.4rem;
         transition: transform $transition-fast;
     }
 
@@ -95,27 +179,64 @@
         }
     }
 
-    &:active {
-        transform: scale(0.92);
-    }
 }
 
+// "Calificar" en fantasma: borde tenue y texto secundario, para que no
+// compita con el dato. Con puntero solo aparece al pasar por la card (o al
+// enfocarlo con teclado); en touch no hay hover, asi que queda siempre.
 .badge-rate-btn {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: var(--dharma-text-main);
-    border: none !important;
-    font-size: 0.75rem;
+    margin-left: auto;
+    background-color: transparent;
+    color: var(--dharma-text-neutral);
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    font-size: 0.7rem;
     font-weight: 600;
-    padding: 0.22rem 0.6rem;
+    line-height: 1;
+    padding: 0.3rem 0.6rem;
     border-radius: $radius-pill;
-    transition: background-color $transition-fast, color $transition-fast;
+    transition: border-color $transition-fast, color $transition-fast, opacity $transition-fast;
     text-decoration: none;
     cursor: pointer;
 
-    &:hover {
-        background-color: rgba(212, 175, 55, 0.2);
-        color: var(--dharma-accent);
+    &:hover,
+    &:focus-visible {
+        color: var(--dharma-text-main);
+        border-color: rgba(255, 255, 255, 0.35) !important;
     }
+
+    @media (hover: hover) {
+        opacity: 0;
+
+        .movie-card:hover &,
+        &:focus-visible {
+            opacity: 1;
+        }
+    }
+
+    // Con nota propia: numeral dorado, siempre visible.
+    &.is-rated {
+        color: var(--dharma-accent);
+        background-color: rgba(212, 175, 55, 0.12);
+        border-color: rgba(212, 175, 55, 0.3) !important;
+
+        @media (hover: hover) {
+            opacity: 1;
+        }
+
+        &:hover {
+            border-color: rgba(212, 175, 55, 0.6) !important;
+        }
+    }
+}
+
+.badge-rate-mine {
+    @include numeral(0.85rem, 600);
+}
+
+.badge-rate-scale {
+    font-size: 0.62rem;
+    opacity: 0.7;
+    margin-left: 1px;
 }
 
 // Feedback táctil instantáneo al hacer clic (ribbon de watchlist / badge de calificar),
@@ -126,7 +247,13 @@
     100% { transform: scale(1); }
 }
 
-.ribbon-btn.btn-pulse,
+// El ribbon pulsa solo el ícono (no el fondo/caja del botón, que queda fijo
+// contra la esquina del póster); el badge de Calificar pulsa entero porque ahí
+// se lee como una sola píldora (ícono + texto).
+.ribbon-btn.btn-pulse i {
+    animation: btn-pulse-feedback 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .badge-rate-btn.btn-pulse {
     animation: btn-pulse-feedback 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

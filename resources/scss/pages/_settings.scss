@@ -1,0 +1,152 @@
+@use '../base/variables' as *;
+
+// ==========================================================================
+// Ajustes: región y plataformas de streaming
+// ==========================================================================
+
+// Aviso de bienvenida (primer ingreso despues del registro).
+.settings-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background-color: var(--dharma-elevated);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-left: 3px solid var(--dharma-accent);
+    border-radius: $radius-lg;
+    font-size: 0.9rem;
+
+    @media (max-width: 575px) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.settings-form {
+    max-width: 960px;
+}
+
+.settings-block {
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    background-color: var(--dharma-elevated);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-lg;
+}
+
+.settings-block-head {
+    margin-bottom: 1rem;
+}
+
+.settings-block-title {
+    font-family: $font-family-headings;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    margin-bottom: 0.2rem;
+}
+
+.settings-block-help {
+    font-size: 0.85rem;
+    color: var(--dharma-text-secondary);
+    margin: 0;
+}
+
+.settings-region {
+    max-width: 320px;
+}
+
+// Grilla de plataformas: chips con logo. El checkbox nativo queda oculto y el
+// estado se pinta con `:has(:checked)` sobre el label (borde y check dorados).
+.provider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.provider-chip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.7rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-md;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color $transition-fast, background-color $transition-fast, transform $transition-fast;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.25);
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    &:has(.provider-chip-input:focus-visible) {
+        outline: 2px solid var(--dharma-accent);
+        outline-offset: 2px;
+    }
+
+    &:has(.provider-chip-input:checked) {
+        border-color: var(--dharma-accent);
+        background-color: rgba(212, 175, 55, 0.1);
+
+        .provider-chip-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .provider-chip-name {
+            color: var(--dharma-text-main);
+        }
+    }
+}
+
+.provider-chip-input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.provider-chip-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background-color: var(--dharma-surface);
+}
+
+.provider-chip-logo-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dharma-text-secondary);
+}
+
+.provider-chip-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--dharma-text-secondary);
+}
+
+.provider-chip-check {
+    color: var(--dharma-accent);
+    font-size: 0.95rem;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity $transition-fast, transform $transition-fast;
+}
+
+.settings-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}

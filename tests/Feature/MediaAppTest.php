@@ -7,6 +7,7 @@ use App\Models\Review;
 use App\Models\User;
 use App\Models\Watchlist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class MediaAppTest extends TestCase
@@ -58,17 +59,24 @@ class MediaAppTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        $response = $this->post(route('reviews.store'), [
+        $base = [
             'tmdb_id' => 157336,
             'media_type' => 'movie',
             'title' => 'Interstellar',
             'release_date' => '2014-11-05',
-            'rating' => 9.5,
+        ];
+
+        // Dos modales, una fila: primero la nota, despues la reseña.
+        $this->post(route('reviews.store'), $base + [
+            'form' => 'rating',
+            'rating' => 9,
+            'watched_date' => '2026-08-20',
+        ])->assertSessionHas('success');
+
+        $response = $this->post(route('reviews.store'), $base + [
+            'form' => 'review',
             'review_text' => 'Una de las mejores películas que he visto jamás.',
             'private_notes' => 'Nota personal: Ver de nuevo con auriculares.',
-            'watched_date' => '2026-08-20',
-            'status' => 'watched',
-            'is_rewatch' => 0,
             'contains_spoilers' => 0,
         ]);
 
@@ -81,7 +89,7 @@ class MediaAppTest extends TestCase
 
         $this->assertDatabaseHas('reviews', [
             'user_id' => $this->user->id,
-            'rating' => 9.5,
+            'rating' => 9,
             'review_text' => 'Una de las mejores películas que he visto jamás.',
             'private_notes' => 'Nota personal: Ver de nuevo con auriculares.',
         ]);
@@ -132,7 +140,6 @@ class MediaAppTest extends TestCase
             'review_text' => 'Excelente película.',
             'private_notes' => 'Nota secreta.',
             'watched_date' => '2026-08-20',
-            'status' => 'watched',
         ]);
 
         $response = $this->get(route('reviews.index'));
@@ -140,5 +147,42 @@ class MediaAppTest extends TestCase
         $response->assertSee('Mi Diario de Cine');
         $response->assertSee('Interstellar');
         $response->assertSee('Nota secreta.');
+    }
+
+    public function test_la_card_muestra_mi_nota_en_vez_de_calificar(): void
+    {
+        $user = User::factory()->create();
+
+        // Sin nota: la card ofrece "Calificar" (solo texto, sin icono).
+        $this->actingAs($user)->get(route('home'))
+            ->assertSee('Calificar')
+            ->assertDontSee('badge-rate-mine')
+            ->assertDontSee('bi-star text-success');
+
+        $media = MediaItem::create(['tmdb_id' => 157336, 'media_type' => 'movie', 'title' => 'Interstellar', 'genres' => []]);
+        Review::create(['user_id' => $user->id, 'media_item_id' => $media->id, 'rating' => 8.5, 'watched_date' => now()]);
+
+        // Con nota: la card muestra 8.5/10 en su lugar.
+        $this->actingAs($user)->get(route('home'))
+            ->assertSee('<span class="badge-rate-mine">8.5</span>', false);
+    }
+
+    public function test_la_web_oficial_solo_se_enlaza_si_es_http(): void
+    {
+        // TMDB "de verdad" (clave de prueba + Http::fake): la web oficial es
+        // un dato que edita cualquiera en TMDB.
+        config(['services.tmdb.api_key' => 'test-key', 'services.tmdb.read_token' => null]);
+        Http::fake([
+            'api.themoviedb.org/3/movie/101*' => Http::response(['id' => 101, 'title' => 'Trucha', 'overview' => '', 'homepage' => 'javascript:alert(1)']),
+            'api.themoviedb.org/3/movie/202*' => Http::response(['id' => 202, 'title' => 'Legal', 'overview' => '', 'homepage' => 'https://example.com/pelicula']),
+        ]);
+
+        $this->get(route('media.show', ['type' => 'movie', 'id' => 101]))
+            ->assertOk()
+            ->assertDontSee('javascript:alert', false);
+
+        $this->get(route('media.show', ['type' => 'movie', 'id' => 202]))
+            ->assertOk()
+            ->assertSee('href="https://example.com/pelicula"', false);
     }
 }

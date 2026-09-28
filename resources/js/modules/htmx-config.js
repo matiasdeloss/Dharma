@@ -53,10 +53,35 @@ export function initHtmxConfig() {
         }
     }
 
+    // Sumar/sacar títulos de una lista (MediaListController::toast).
+    function handleListUpdated(data) {
+        const message = (typeof data === 'object' && data !== null) ? data.message : data;
+        const type = (typeof data === 'object' && data !== null && data.type) ? data.type : 'success';
+        const title = (typeof data === 'object' && data !== null && data.title) ? data.title : 'Listas';
+
+        if (window.showNotification) {
+            window.showNotification(message || 'Lista actualizada.', type, title);
+        }
+    }
+
+    // Validación fallida en un form por HTMX (422, ver bootstrap/app.php). El
+    // form queda como estaba para que se pueda corregir y reenviar.
+    function handleFormInvalid(data) {
+        const message = (typeof data === 'object' && data !== null) ? data.message : data;
+
+        if (window.showNotification) {
+            window.showNotification(message || 'Revisá los datos e intentá de nuevo.', 'error', 'No se pudo guardar');
+        }
+    }
+
     // Listener 1: Eventos nativos de HTMX en document.body
     document.body.addEventListener('watchlistUpdated', (e) => handleWatchlist(e.detail));
     document.body.addEventListener('reviewSaved', (e) => handleReviewSaved(e.detail));
     document.body.addEventListener('authRequired', (e) => handleAuthRequired(e.detail));
+    // Sin respaldo en el Listener 2: con un 422 htmx no reemplaza nada, así
+    // que el form que disparó el evento sigue en la página y el evento llega.
+    document.body.addEventListener('formInvalid', (e) => handleFormInvalid(e.detail));
+    document.body.addEventListener('listUpdated', (e) => handleListUpdated(e.detail));
 
     // Listener 2: Respaldo directo en cabecera HTTP de respuesta
     document.addEventListener('htmx:afterOnLoad', (event) => {

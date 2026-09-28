@@ -37,40 +37,56 @@
                     <span class="badge-rank-number">#{{ $rank }}</span>
                 </div>
             @endif
+
+            {{-- Plataformas del usuario donde se ve hoy (lo llena Recommender). --}}
+            @if(!empty($item['my_providers']))
+                <div class="movie-card-providers" title="Disponible en {{ collect($item['my_providers'])->pluck('name')->join(', ', ' y ') }}">
+                    @foreach(array_slice($item['my_providers'], 0, 3) as $provider)
+                        @if($provider['logo_path'])
+                            <img src="https://image.tmdb.org/t/p/w92{{ $provider['logo_path'] }}" alt="{{ $provider['name'] }}" loading="lazy">
+                        @endif
+                    @endforeach
+                </div>
+            @endif
         </div>
 
-        <!-- Bottom Body Section (Clean & Compact) -->
-        <div class="p-2 d-flex flex-column justify-content-between flex-grow-1 movie-card-info">
-            <div>
-                <!-- Rating Row (TMDB Score + Clear "Calificar" Badge Button) -->
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="small fw-bold text-white d-flex align-items-center gap-1">
-                        <i class="bi bi-star-fill text-warning"></i>
-                        <span>{{ $rating ? number_format($rating, 1) : '-' }}</span>
-                    </div>
-
-                    <button 
-                        type="button" 
-                        class="badge-rate-btn d-inline-flex align-items-center gap-1" 
-                        title="Calificar y tomar notas"
-                        hx-get="{{ route('reviews.modal', ['type' => $type, 'id' => $id]) }}"
-                        hx-target="#logModalContent"
-                        data-bs-toggle="modal"
-                        data-bs-target="#logModal"
-                    >
-                        <i class="bi bi-star text-warning"></i>
-                        <span>Calificar</span>
-                    </button>
-                </div>
-
-                <!-- Title & Year -->
-                <a href="{{ route('media.show', ['type' => $type, 'id' => $id]) }}" class="text-white text-decoration-none fw-semibold small d-block text-truncate-2 mb-1" title="{{ $title }}">
-                    {{ $title }}
-                </a>
+        {{-- Cuerpo: una linea de meta (nota TMDB · año) con la accion a la
+             derecha, y el titulo debajo. Sin fila aparte para el año: la card
+             se acorta y se ve mas poster. --}}
+        @php $myRating = $item['my_rating'] ?? null; @endphp
+        <div class="movie-card-info">
+            <div class="movie-card-meta">
+                <span class="movie-card-tmdb" title="Nota en TMDB">
+                    <i class="bi bi-star-fill"></i>{{ $rating ? number_format($rating, 1) : '–' }}
+                </span>
                 @if($year)
-                    <div class="text-secondary text-xs">{{ $year }}</div>
+                    <span class="movie-card-sep" aria-hidden="true">·</span>
+                    <span class="movie-card-year">{{ $year }}</span>
                 @endif
+
+                {{-- Ya calificada: TU nota, siempre visible (y abre el modal para
+                     editarla). Sin nota: "Calificar" en fantasma, que aparece al
+                     pasar el mouse; en touch queda siempre. --}}
+                <button
+                    type="button"
+                    class="badge-rate-btn {{ $myRating !== null ? 'is-rated' : '' }}"
+                    title="{{ $myRating !== null ? 'Tu nota: ' . number_format($myRating, 1) . ' · editar' : 'Calificar y tomar notas' }}"
+                    hx-get="{{ route('reviews.rate', ['type' => $type, 'id' => $id]) }}"
+                    hx-target="#logModalContent"
+                    data-bs-toggle="modal"
+                    data-bs-target="#logModal"
+                >
+                    @if($myRating !== null)
+                        <span class="badge-rate-mine">{{ number_format($myRating, 1) }}</span><span class="badge-rate-scale">/10</span>
+                    @else
+                        Calificar
+                    @endif
+                </button>
             </div>
+
+            <a href="{{ route('media.show', ['type' => $type, 'id' => $id]) }}" class="movie-card-title text-truncate-2" title="{{ $title }}">
+                {{ $title }}
+            </a>
         </div>
     </div>
 </div>

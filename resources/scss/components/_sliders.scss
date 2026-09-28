@@ -1,22 +1,24 @@
+@use '../base/variables' as *;
+
 // ==========================================================================
 // Media Sliders / Carousels (Horizontal Streaming Rows)
 // ==========================================================================
 
-$slider-gap: 1.15rem;
+$slider-gap: 0.7rem;
 
-// Tamaño estandarizado de las cards del carrusel: cuántas entran por fila en
-// cada breakpoint + un único factor de escala aplicado a todas por igual (en
-// vez de 5 calc() copiados a mano). Para cambiar el tamaño de las cards, tocá
-// solo $slider-card-scale acá.
+// Cuántas cards entran por fila en cada breakpoint. La columna SIEMPRE llena
+// el 100% del carril exacto (sin esto, sobra o falta espacio y se asoma la
+// próxima card en el borde). El tamaño visual "más chica" de la card se maneja
+// aparte con transform:scale en .movie-card (_cards.scss) — eso no toca el
+// espacio que reserva en el layout, así que nunca puede causar ese asomo.
 $slider-cards-xl: 6;
 $slider-cards-lg: 5;
 $slider-cards-md: 4;
 $slider-cards-sm: 3;
 $slider-cards-xs: 2;
-$slider-card-scale: 0.96; // 4% más chicas
 
 @function slider-card-width($count) {
-    @return calc(((100% - (#{$count} - 1) * #{$slider-gap}) / #{$count}) * #{$slider-card-scale});
+    @return calc((100% - (#{$count} - 1) * #{$slider-gap}) / #{$count});
 }
 
 .media-slider-container {
@@ -29,8 +31,53 @@ $slider-card-scale: 0.96; // 4% más chicas
     width: 100%;
 }
 
-.media-slider-header {
-    margin-bottom: 1rem;
+// Encabezado de sección: firma visual del sitio (borde dorado a la izquierda,
+// mismo lenguaje que .hero-tagline) en vez de un ícono suelto por título.
+.media-slider-header,
+.section-header {
+    margin-bottom: 1.1rem;
+    padding-left: 0.9rem;
+    border-left: 3px solid var(--dharma-accent);
+}
+
+.section-title {
+    font-family: $font-family-headings;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--dharma-text-main);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin-bottom: 0.2rem;
+}
+
+.section-subtitle {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--dharma-text-secondary);
+}
+
+// Logo de plataforma al lado del titulo de una fila ("Lo mejor de Netflix").
+.section-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+// Link "Ver todo" a la derecha del titulo.
+.section-more {
+    margin-left: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--dharma-text-secondary);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color $transition-fast;
+
+    &:hover {
+        color: var(--dharma-accent);
+    }
 }
 
 .media-slider-track {
@@ -166,19 +213,18 @@ $slider-card-scale: 0.96; // 4% más chicas
     }
 }
 
-// Rank Badge for Top 10 (#1, #2, ... #10)
 .badge-rank-number {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(14, 18, 22, 0.94);
+    background-color: rgba(14, 18, 22, 0.9);
     color: var(--dharma-accent);
     font-family: $font-family-headings;
     font-weight: 800;
-    font-size: 0.8rem;
-    padding: 3px 8px;
-    border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    font-size: 1.35rem;
+    padding: 2px 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
     letter-spacing: -0.02em;
     pointer-events: none;
 }

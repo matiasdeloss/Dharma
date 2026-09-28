@@ -32,5 +32,10 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Sin claves: TmdbService y OmdbService usan sus datos mock, asi la
+             suite no depende de la red ni de la cuota de las APIs. -->
+        <env name="TMDB_API_KEY" value=""/>
+        <env name="TMDB_READ_TOKEN" value=""/>
+        <env name="OMDB_API_KEY" value=""/>
     </php>
 </phpunit>

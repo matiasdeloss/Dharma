@@ -1,15 +1,23 @@
+@use '../base/variables' as *;
+
 // ==========================================================================
 // Hero Banners & Movie Backdrop Header Components
 // ==========================================================================
 
+// Hero "a la Letterboxd": el fotograma no llega a los bordes de la ventana.
+// De lg en adelante ocupa el 70% central y se funde con el fondo de la pagina
+// por los cuatro lados (degrades laterales + superior + inferior), asi que la
+// imagen se lee como una foto que emerge del fondo y no como un banner. El
+// texto va centrado encima, sobre una zona oscurecida a proposito.
 .hero-home-banner {
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    border-radius: $radius-lg;
-    background-color: #14181f;
-    border: 1px solid var(--dharma-border);
-    padding: 2.5rem 2rem;
+    background-color: var(--dharma-bg);
+    padding: 2.5rem 0 2.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 
     // Fotograma de fondo (backdrop de un título en tendencia), atenuado.
     &::before {
@@ -19,28 +27,138 @@
         z-index: -2;
         background-image: var(--hero-backdrop, none);
         background-size: cover;
-        background-position: center 22%;
-        filter: saturate(0.8) brightness(0.6);
-        transform: scale(1.04); // evita bordes claros al filtrar
+        background-position: center 30%;
+        filter: saturate(0.85) brightness(0.6);
+        // El scale base evita bordes claros al filtrar; la animacion lo lleva
+        // muy despacio un poco mas adentro (Ken Burns) para que la portada
+        // respire en vez de quedar como una foto pegada.
+        transform: scale(1.06);
+        animation: hero-kenburns 34s ease-in-out infinite alternate;
     }
 
-    // Viñeta + degradé para que el texto de la izquierda siga siendo legible
-    // sobre cualquier fotograma, tipo "sala de cine" en vez de fondo plano.
     &::after {
         content: '';
         position: absolute;
         inset: 0;
         z-index: -1;
         background:
-            linear-gradient(100deg, rgba(15, 18, 22, 0.97) 0%, rgba(15, 18, 22, 0.88) 38%, rgba(15, 18, 22, 0.5) 72%, rgba(15, 18, 22, 0.28) 100%),
-            radial-gradient(ellipse at 50% 130%, rgba(0, 0, 0, 0.55), transparent 60%);
+            // 1. Fundido inferior hacia el fondo REAL de la pagina, para que
+            //    no se vea la costura donde arranca el carrusel.
+            linear-gradient(to bottom, transparent 45%, rgba(34, 40, 49, 0.75) 82%, var(--dharma-bg) 100%),
+            // 2. Scrim superior: el navbar es transparente arriba de todo.
+            linear-gradient(to bottom, rgba(12, 15, 19, 0.8) 0%, rgba(12, 15, 19, 0.35) 14%, transparent 30%),
+            // 3. Zona central oscurecida detras del texto.
+            radial-gradient(ellipse 52% 70% at 50% 55%, rgba(14, 17, 22, 0.72), transparent 100%);
     }
 
     @media (min-width: 768px) {
-        padding: 3.5rem 3rem;
+        padding: 3.5rem 0 3.5rem;
+    }
+
+    // De lg en adelante: el hero se mete por debajo del navbar sticky
+    // (`--navbar-h` la publica modules/navbar.js) y el fotograma pasa a ocupar
+    // el 70% central, con fundido lateral hacia el fondo.
+    @media (min-width: 992px) {
+        margin-top: calc(-1 * var(--navbar-h, 68px));
+        padding-top: calc(var(--navbar-h, 68px) + 3rem);
+        padding-bottom: 3.5rem;
+        min-height: min(64vh, 600px);
+
+        &::before {
+            inset: 0 15%;
+        }
+
+        &::after {
+            background:
+                linear-gradient(to bottom, transparent 45%, rgba(34, 40, 49, 0.75) 82%, var(--dharma-bg) 100%),
+                linear-gradient(to bottom, rgba(12, 15, 19, 0.8) 0%, rgba(12, 15, 19, 0.35) 14%, transparent 30%),
+                // Fundido lateral: arranca en el borde de la imagen (15%) y
+                // se abre hacia adentro.
+                linear-gradient(to right, var(--dharma-bg) 14%, rgba(34, 40, 49, 0) 34%, rgba(34, 40, 49, 0) 66%, var(--dharma-bg) 86%),
+                radial-gradient(ellipse 40% 70% at 50% 55%, rgba(14, 17, 22, 0.72), transparent 100%);
+        }
     }
 }
 
-.vr-stat-divider {
-    height: 48px;
+// Bloque de texto centrado, con ancho de lectura acotado.
+.hero-content {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
 }
+
+@keyframes hero-kenburns {
+    from {
+        transform: scale(1.06) translate3d(0, 0, 0);
+    }
+    to {
+        transform: scale(1.14) translate3d(0, -1.5%, 0);
+    }
+}
+
+// El movimiento del fondo es decorativo: si el sistema pide menos animacion,
+// se apaga entero y queda la imagen fija.
+@media (prefers-reduced-motion: reduce) {
+    .hero-home-banner::before {
+        animation: none;
+    }
+}
+
+// Crédito discreto de la foto de fondo (mismo patrón que /login)
+.hero-backdrop-credit {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    background-color: rgba(22, 28, 35, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.3rem 0.75rem;
+    border-radius: $radius-pill;
+    pointer-events: none;
+}
+
+// Título y subtítulo necesitan algo de sombra propia: al estar sobre un
+// fotograma real (no un fondo plano), zonas más claras de la imagen pueden
+// comerse el contraste del texto blanco.
+.hero-title {
+    font-family: $font-family-headings;
+    font-size: clamp(2rem, 4.2vw, 3.3rem);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
+}
+
+.hero-subtitle {
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: var(--dharma-cream);
+    opacity: 0.85;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+}
+
+// Tagline como una pequeña "firma" de marca en vez de texto itálico suelto.
+.hero-tagline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--dharma-accent);
+    color: var(--dharma-cream);
+    font-style: italic;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    opacity: 0.9;
+
+    .bi-quote {
+        color: var(--dharma-accent);
+        font-size: 1rem;
+    }
+}
+

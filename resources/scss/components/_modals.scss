@@ -1,29 +1,541 @@
-// ==========================================================================
-// Modals & Offcanvases
-// ==========================================================================
+@use '../base/variables' as *;
 
+// ==========================================================================
+// Modales - Dharma Cinema Platform
+// ==========================================================================
+// Re-escrito de cero. Decisiones de fondo respecto de la version anterior:
+//
+// 1. Se fue la estrella gigante al lado del numero. El numero solo, con la
+//    palabra que le corresponde debajo, dice mas y no compite con nada.
+// 2. Las cifras usan el mixin `numeral` como en el resto del proyecto: la
+//    version vieja tenia el numero en peso 900, que es justo el "caricaturesco"
+//    que se saco del hero y de las estadisticas.
+// 3. El contenido del formulario esta alineado a la izquierda. Antes estaba
+//    todo centrado, que se ve simetrico pero obliga a buscar el arranque de
+//    cada linea; en un formulario de varios campos se lee peor.
+//
+// OJO: `.modal-form-control` es la clase que `@extend`ea `.dharma-select` en
+// pages/_library.scss. Si se renombra, rompe el build de esa vista.
+
+// --------------------------------------------------------------------------
+// Fondo detras del modal
+// --------------------------------------------------------------------------
+// Mas oscuro que el default de Bootstrap y con desenfoque: el sitio esta lleno
+// de posters y fotogramas, y a media opacidad seguian compitiendo con el modal.
+.modal-backdrop {
+    --bs-backdrop-opacity: 0.72;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+// --------------------------------------------------------------------------
+// Superficie base de cualquier modal del proyecto
+// --------------------------------------------------------------------------
 .modal-content-dharma {
-    background-color: var(--dharma-surface);
+    background-color: $color-bg-backdrop;
     color: var(--dharma-text-main);
-    border: 1px solid var(--dharma-border);
+    border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: $radius-lg;
-    box-shadow: $shadow-modal;
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.85);
+    overflow: hidden;
 }
 
 .modal-header-dharma {
-    border-bottom: 1px solid var(--dharma-border);
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding: 1.25rem 1.5rem;
 }
 
 .modal-footer-dharma {
-    border-top: 1px solid var(--dharma-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 1.25rem 1.5rem;
 }
 
-.modal-poster-preview {
-    max-height: 240px;
+// Boton de cerrar propio en vez de `.btn-close`: el filtro `invert()` de
+// `btn-close-white` invierte tambien el fondo del boton y lo deja como un
+// circulo gris claro sobre la imagen.
+.modal-close-dharma {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50%;
+    background-color: rgba(14, 18, 22, 0.65);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color $transition-fast, color $transition-fast, border-color $transition-fast;
+
+    &:hover,
+    &:focus-visible {
+        background-color: rgba(14, 18, 22, 0.92);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+    }
+}
+
+// Alias del nombre viejo, para no romper markup que todavia lo use.
+.rate-modal-close {
+    @extend .modal-close-dharma;
+}
+
+// --------------------------------------------------------------------------
+// Modal de calificacion: layout partido formulario | fotograma
+// --------------------------------------------------------------------------
+.rate-modal-dialog {
+    max-width: 860px;
     width: 100%;
-    object-fit: cover;
+    margin-left: auto;
+    margin-right: auto;
+
+    @media (max-width: 991.98px) {
+        max-width: 500px;
+    }
+
+    @media (max-width: 576px) {
+        max-width: calc(100% - 1.5rem);
+        margin: 0.75rem auto;
+    }
+}
+
+.rate-split-wrapper {
+    display: flex;
+    align-items: stretch;
+    min-height: 100%;
+}
+
+.rate-split-form-col {
+    flex: 1 1 60%;
+    min-width: 0;
+    padding: 1.9rem 2rem;
+
+    @media (max-width: 576px) {
+        padding: 1.5rem 1.35rem;
+    }
+}
+
+.rate-split-media-col {
+    flex: 0 0 40%;
+    position: relative;
+    overflow: hidden;
+    background-color: #10141a;
+
+    // Bajo lg el fotograma se oculta y queda solo el formulario, igual que /login.
+    @media (max-width: 991.98px) {
+        display: none;
+    }
+
+    // Atenuado a proposito: el arte del poster trae su propio titulo grande y
+    // le ganaba visualmente al titulo del modal. Aca es ambiente, no protagonista.
+    .split-cinema-still {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        filter: brightness(0.5) saturate(0.85) contrast(1.02);
+    }
+
+    // Costura degradada donde la foto se encuentra con el panel del formulario.
+    .split-seam-gradient {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 120px;
+        background: linear-gradient(90deg, $color-bg-backdrop 0%, rgba(25, 30, 36, 0) 100%);
+        pointer-events: none;
+        z-index: 2;
+    }
+}
+
+// --------------------------------------------------------------------------
+// Encabezado
+// --------------------------------------------------------------------------
+.rate-modal-heading {
+    margin-bottom: 1.4rem;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.rate-modal-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.rate-modal-badge {
+    background-color: rgba(223, 208, 184, 0.12);
+    color: var(--dharma-cream);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: $radius-sm;
+}
+
+.rate-modal-year {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dharma-text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.rate-modal-title {
+    font-family: $font-family-headings;
+    font-size: 1.45rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: #ffffff;
+    line-height: 1.2;
+    margin-bottom: 0;
+}
+
+// Linea de contexto bajo el titulo: "editando el registro del 3 sep" o
+// "ya lo registraste 2 veces". Con re-visionados el modal necesita decir
+// sobre cual de las entradas esta trabajando.
+.rate-modal-context {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.78rem;
+    color: var(--dharma-text-secondary);
+
+    i {
+        color: var(--dharma-accent);
+    }
+}
+
+// --------------------------------------------------------------------------
+// Bloque de puntaje
+// --------------------------------------------------------------------------
+.rate-score-block {
+    margin-bottom: 1.6rem;
+}
+
+.rate-score-readout {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+// Sin brillo dorado ni estrella: el peso lo da el tamano, no el adorno.
+.rate-score-number {
+    @include numeral(3.5rem, 500);
+    color: var(--dharma-accent);
+}
+
+.rate-score-max {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dharma-text-secondary);
+}
+
+
+// Estrellas clickeables. Cada estrella son dos zonas: mitad izquierda = media,
+// mitad derecha = entera (ver modules/star-rater.js). El valor real viaja en un
+// hidden; esto es solo la interfaz.
+.star-rater-stars {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+}
+
+.star-rater-star {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    width: 2.4rem;
+    height: 2.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    transition: color $transition-fast, transform $transition-fast;
+
+    &.is-on {
+        color: var(--dharma-gold-bright);
+    }
+
+    &:hover {
+        transform: scale(1.12);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(212, 175, 55, 0.6);
+        outline-offset: 3px;
+        border-radius: 4px;
+    }
+}
+
+// Mientras se pasa el mouse el numero muestra la vista previa: mas apagado,
+// para que se distinga de la nota ya elegida.
+.star-rater.is-preview .rate-score-number {
+    opacity: 0.6;
+}
+
+.star-rater-hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--dharma-text-muted);
+}
+
+// --------------------------------------------------------------------------
+// Campos del formulario
+// --------------------------------------------------------------------------
+.modal-field {
+    margin-bottom: 1.15rem;
+}
+
+.modal-form-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dharma-text-secondary);
+    margin-bottom: 0.45rem;
+}
+
+// Superficie compartida por todos los controles del proyecto. `.dharma-select`
+// (pages/_library.scss) la extiende: no renombrar.
+.modal-form-control {
+    background-color: #1f252e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: $radius-md;
-    box-shadow: $shadow-card;
+    color: var(--dharma-text-main);
+    font-size: 0.9rem;
+    padding: 0.65rem 0.9rem;
+    resize: none; // Evita que se deforme o pase de la altura
+    transition: border-color $transition-fast, box-shadow $transition-fast, background-color $transition-fast;
+
+    &::placeholder {
+        color: var(--dharma-text-muted);
+        font-size: 0.85rem;
+    }
+
+    &:focus {
+        background-color: #242b36;
+        border-color: var(--dharma-accent);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+        color: #ffffff;
+    }
+}
+
+.modal-textarea-tall {
+    height: 140px !important;
+}
+
+.modal-textarea {
+    height: 78px;
+    overflow-y: auto;
+
+    // Scrollbar propio: el nativo de Windows (con flechitas) rompia el estilo.
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.18);
+        border-radius: $radius-pill;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+// Estado y fecha comparten fila: son un solo dato ("cuando y como lo viste")
+// y separados dejaban el modal larguisimo.
+.modal-field-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+
+    @media (max-width: 576px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// El calendario nativo se pinta negro sobre fondo oscuro y no se ve.
+// `color-scheme` ademas le da al datepicker del navegador el tema oscuro.
+.modal-date-input {
+    color-scheme: dark;
+    font-variant-numeric: tabular-nums;
+
+    &::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.55;
+        filter: invert(1);
+        transition: opacity $transition-fast;
+    }
+
+    &:hover::-webkit-calendar-picker-indicator {
+        opacity: 1;
+    }
+}
+
+// Interruptor de re-visionado. Misma mecanica que el de spoilers, pero en
+// violeta: es el mismo color con el que el diario marca los re-visionados.
+.rewatch-switch-wrapper {
+    padding-left: 0;
+    cursor: pointer;
+    user-select: none;
+
+    .rewatch-switch-input {
+        width: 2.35rem;
+        height: 1.25rem;
+        background-color: #262c35;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        margin-left: 0;
+        transition: background-color $transition-fast, border-color $transition-fast;
+
+        &:checked {
+            background-color: $color-accent-purple;
+            border-color: $color-accent-purple;
+        }
+
+        &:focus {
+            box-shadow: 0 0 0 3px rgba(185, 147, 214, 0.22);
+        }
+    }
+
+    .rewatch-switch-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--dharma-text-secondary);
+        cursor: pointer;
+    }
+}
+
+// Interruptor de spoilers
+.spoiler-switch-wrapper {
+    padding-left: 0;
+    margin-top: 0.6rem;
+    cursor: pointer;
+    user-select: none;
+
+    .spoiler-switch-input {
+        width: 2.35rem;
+        height: 1.25rem;
+        background-color: #262c35;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        margin-left: 0;
+        transition: background-color $transition-fast, border-color $transition-fast;
+
+        &:checked {
+            background-color: $color-accent-danger;
+            border-color: $color-accent-danger;
+        }
+
+        &:focus {
+            box-shadow: 0 0 0 3px rgba(224, 108, 117, 0.22);
+        }
+    }
+
+    .spoiler-switch-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--dharma-text-secondary);
+        cursor: pointer;
+    }
+}
+
+// Fila de acciones
+.modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 0.4rem;
+}
+
+
+// --------------------------------------------------------------------------
+// Modal de "inicia sesion"
+// --------------------------------------------------------------------------
+.auth-modal-body {
+    padding: 2.25rem 1.75rem 1.75rem;
+    text-align: center;
+}
+
+.auth-modal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    color: var(--dharma-accent);
+    font-size: 1.4rem;
+    margin-bottom: 1.1rem;
+}
+
+.auth-modal-title {
+    font-family: $font-family-headings;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--dharma-text-main);
+    margin-bottom: 0.5rem;
+}
+
+.auth-modal-text {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--dharma-text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+// --------------------------------------------------------------------------
+// Modal del trailer
+// --------------------------------------------------------------------------
+.trailer-modal-content {
+    background-color: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: $radius-lg;
+    overflow: hidden;
+}
+
+// --------------------------------------------------------------------------
+// Estado de carga mientras htmx trae el contenido
+// --------------------------------------------------------------------------
+.modal-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    padding: 4rem 2rem;
+    color: var(--dharma-text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
 }

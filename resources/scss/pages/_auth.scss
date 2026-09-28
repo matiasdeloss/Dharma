@@ -1,3 +1,5 @@
+@use '../base/variables' as *;
+
 // ==========================================================================
 // Authentication Components (Split Screen 50/50 - Criterion / HBO Max Style)
 // ==========================================================================
@@ -298,4 +300,35 @@ $auth-footer-font-size: 0.875rem;   // Tamaño del enlace inferior ("¿Aún no t
         gap: 0.45rem;
         pointer-events: none;
     }
+}
+
+// --------------------------------------------------------------------------
+// Checkbox y errores de los formularios de auth
+// --------------------------------------------------------------------------
+// El checkbox venia con `bg-dark border-secondary` de Bootstrap y los errores
+// con `text-danger` (#dc3545), que no es el rojo de este proyecto.
+.auth-check-input {
+    background-color: #1f252e;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    transition: background-color $transition-fast, border-color $transition-fast;
+
+    &:checked {
+        background-color: var(--dharma-accent);
+        border-color: var(--dharma-accent);
+    }
+
+    &:focus {
+        border-color: var(--dharma-accent);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+    }
+}
+
+.auth-error {
+    display: flex;
+    align-items: center;
+    margin-top: 0.35rem;
+    padding-left: 0.5rem;
+    font-size: 0.78rem;
+    color: $color-accent-danger;
 }

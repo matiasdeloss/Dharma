@@ -8,12 +8,12 @@
     <input type="hidden" name="vote_average" value="{{ $voteAverage }}">
 
     @if($inWatchlist)
-        <button type="submit" class="btn btn-outline-info d-flex align-items-center gap-2">
-            <i class="bi bi-bookmark-check-fill text-info"></i>
+        <button type="submit" class="btn-cine-active" title="Clic para quitarla de tu watchlist">
+            <i class="bi bi-bookmark-check-fill"></i>
             <span>En tu Watchlist</span>
         </button>
     @else
-        <button type="submit" class="btn btn-cine-secondary d-flex align-items-center gap-2">
+        <button type="submit" class="btn-cine-secondary">
             <i class="bi bi-bookmark-plus"></i>
             <span>Agregar a Watchlist</span>
         </button>

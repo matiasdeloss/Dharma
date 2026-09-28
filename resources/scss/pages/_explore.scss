@@ -1,0 +1,59 @@
+@use '../base/variables' as *;
+
+// ==========================================================================
+// Explorar: filtros y modo curado
+// ==========================================================================
+
+.explore-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+
+    .dharma-select {
+        width: auto;
+        min-width: 160px;
+        flex: 1 1 160px;
+
+        @media (min-width: 992px) {
+            flex: 0 1 auto;
+        }
+    }
+}
+
+// Toggle Peliculas / Series: dos pills pegadas.
+.explore-type {
+    display: inline-flex;
+    border: 1px solid var(--dharma-border);
+    border-radius: $radius-pill;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.explore-type-btn {
+    padding: 0.45rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dharma-text-secondary);
+    text-decoration: none;
+    transition: color $transition-fast, background-color $transition-fast;
+
+    &:hover {
+        color: var(--dharma-text-main);
+    }
+
+    &.is-on {
+        color: var(--dharma-bg);
+        background-color: var(--dharma-accent);
+    }
+}
+
+.explore-hint {
+    margin: -0.5rem 0 1.5rem;
+    font-size: 0.85rem;
+    color: var(--dharma-text-secondary);
+
+    a {
+        color: var(--dharma-cream);
+    }
+}

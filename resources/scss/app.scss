@@ -1,28 +1,42 @@
 // ==========================================================================
 // Main SCSS Manifest - Dharma Cinema Platform
 // ==========================================================================
+// Sistema de modulos (`@use`): cada partial declara sus propias dependencias
+// (tokens en `base/variables`, y `components/modals` cuando extiende clases
+// de ahi). El orden de estas lineas sigue definiendo el orden del CSS final.
 
 // 1. External Vendor Dependencies
-@import 'bootstrap-icons/font/bootstrap-icons.css';
-@import 'bootstrap/scss/bootstrap';
+@use 'bootstrap/scss/bootstrap';
 
 // 2. Base & Design Tokens
-@import 'base/variables';
-@import 'base/base';
+@use 'base/variables';
+@use 'base/base';
 
 // 3. Components
-@import 'components/navbar';
-@import 'components/cards';
-@import 'components/buttons';
-@import 'components/modals';
-@import 'components/toasts';
-@import 'components/ratings';
-@import 'components/sliders';
+@use 'components/navbar';
+@use 'components/cards';
+@use 'components/buttons';
+@use 'components/modals';
+@use 'components/toasts';
+@use 'components/ratings';
+@use 'components/sliders';
+@use 'components/charts';
+@use 'components/person-panel';
 
 // 4. Pages & Feature Views
-@import 'pages/hero';
-@import 'pages/auth';
-@import 'pages/media_detail';
+@use 'pages/hero';
+@use 'pages/auth';
+@use 'pages/media_detail';
+@use 'pages/library';
+@use 'pages/search';
+@use 'pages/explore';
+@use 'pages/settings';
+@use 'pages/lists';
 
 // 5. Utilities
-@import 'utilities/utilities';
+@use 'utilities/utilities';
+
+// 6. Iconos (.css plano). Un @import CSS cuenta como "regla", asi que tiene que
+// ir despues de todos los @use; Sass lo emite igual al principio del CSS final
+// y Vite lo inyecta resolviendo las fonts.
+@import 'bootstrap-icons/font/bootstrap-icons.css';
