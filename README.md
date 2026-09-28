@@ -2,6 +2,20 @@
 
 Diario y plataforma de cine y series. Buscá títulos, puntuá y reseñá lo que viste, armá tu watchlist y tus listas, y mirá estadísticas de tu diario. Los datos de catálogo vienen de TMDB y OMDb.
 
+## Capturas
+
+| Inicio | Explorar |
+| --- | --- |
+| ![Inicio](docs/screenshots/inicio.png) | ![Explorar](docs/screenshots/explorar.png) |
+
+| Detalle de un título | Diario |
+| --- | --- |
+| ![Detalle](docs/screenshots/detalle.png) | ![Diario](docs/screenshots/diario.png) |
+
+| Estadísticas | Watchlist |
+| --- | --- |
+| ![Estadísticas](docs/screenshots/estadisticas.png) | ![Watchlist](docs/screenshots/watchlist.png) |
+
 ## Funcionalidades
 
 - **Explorar y buscar** títulos, con panel de personas (reparto y equipo) y tráiler.
